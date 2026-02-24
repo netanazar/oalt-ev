@@ -1,0 +1,133 @@
+<article class="{{ card_class|default:'product-card' }}">
+  <a href="{{ product.get_absolute_url }}" class="product-card-link">
+    {% if product.discount_price %}
+      <span class="product-discount-badge">{{ product.discount_percentage }}% OFF</span>
+    {% endif %}
+
+    <div class="product-media-wrap">
+      <img
+        src="{{ product.main_image.url }}"
+        alt="{{ product.name }}"
+        loading="lazy"
+        decoding="async"
+        class="{{ image_class|default:'product-card-img' }}"
+        {% if show_variant_dots %}data-home-product-image{% endif %}
+      >
+      <div class="product-hover-tools" aria-label="Quick actions">
+        <button
+          type="button"
+          class="product-hover-icon-btn"
+          data-compare-product
+          data-icon-only="1"
+          data-product-id="{{ product.id }}"
+          data-product-name="{{ product.name }}"
+          data-product-url="{{ product.get_absolute_url }}"
+          aria-label="Add to compare"
+          title="Add to compare"
+        >
+          <i class="fa-solid fa-code-compare"></i>
+        </button>
+        <button
+          type="button"
+          class="product-hover-icon-btn"
+          data-wishlist-product
+          data-icon-only="1"
+          data-product-id="{{ product.id }}"
+          data-product-name="{{ product.name }}"
+          data-product-url="{{ product.get_absolute_url }}"
+          aria-label="Add to wishlist"
+          title="Add to wishlist"
+        >
+          <i class="fa-regular fa-heart"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="product-card-body">
+      <h3 class="product-card-title">{{ product.name }}</h3>
+
+      <p class="product-card-subtitle">
+        {% if subtitle_text %}
+          {{ subtitle_text }}
+        {% elif subtitle_mode == "home" %}
+          {{ product.category.name }} Range | Up to {{ product.range_per_charge_km }} km
+        {% elif subtitle_mode == "shop" %}
+          {{ product.short_description|default:"Powerful performance, premium comfort, and dependable daily range."|truncatechars:82 }}
+        {% elif subtitle_mode == "compact" %}
+          Smart city-ready electric ride with premium road presence.
+        {% elif show_range_title %}
+          {{ product.category.name }} Range
+        {% else %}
+          Performance electric bike for smart daily rides.
+        {% endif %}
+      </p>
+
+      <p class="product-copy">Range {{ product.range_per_charge_km }} km | {{ product.battery_capacity_kwh }} kWh Battery</p>
+
+      {% if show_variant_dots and product.variants.all %}
+        <div class="product-meta-row">
+          <div class="product-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <div class="product-color-dots" aria-label="Available colors">
+            {% for variant in product.variants.all|slice:":6" %}
+              <span
+                data-home-variant-dot
+                data-variant-image="{{ variant.image.url }}"
+                data-variant-price="{{ variant.final_price }}"
+                title="{{ variant.color_name }}"
+                style="background: {{ variant.color_code }};"
+              ></span>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="product-rating-row">
+          <div class="product-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+        </div>
+      {% endif %}
+
+      <p class="product-price">
+        <span>MRP</span>
+        {% if product.discount_price %}
+          <del>&#8377; {{ product.price }}</del>
+        {% endif %}
+        <strong {% if show_variant_dots %}data-home-product-price{% endif %}>&#8377; {{ product.selling_price }}</strong>
+        {% if product.discount_price %}
+          <em>Offer</em>
+        {% endif %}
+      </p>
+
+      {% if show_emi %}
+        <p class="product-emi-line" {% if show_variant_dots %}data-home-product-emi{% endif %}>
+          or &#8377; {{ product.selling_price|floatformat:0 }}/Month
+          <button
+            type="button"
+            class="emi-inline-btn"
+            data-emi-trigger
+            data-product-id="{{ product.id }}"
+            data-model="{{ product.name }}"
+            data-price="{{ product.selling_price }}"
+            data-quantity="1"
+          >Buy on EMI</button>
+        </p>
+      {% endif %}
+    </div>
+  </a>
+
+  <div class="product-card-actions">
+    <form method="post" action="{% url 'cart:add_to_cart' product.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button type="submit" class="product-action-btn product-action-btn-cart">
+        <i class="fa-solid fa-cart-plus"></i> Add To Cart
+      </button>
+    </form>
+
+    <a href="{{ product.get_absolute_url }}" class="product-action-btn product-action-btn-buy">
+      Buy Now
+    </a>
+  </div>
+</article>

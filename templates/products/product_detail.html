@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% block title %}{{ product.meta_title|default:product.name }}{% endblock %}
+{% block meta_description %}{{ product.meta_description|default:product.short_description }}{% endblock %}
+{% block content %}
+<section class="pdp-wrap max-w-[1500px] mx-auto px-4 py-8">
+  <div class="pdp-grid">
+    <aside class="pdp-gallery">
+      <div class="pdp-thumb-list">
+        <button class="pdp-thumb is-active" data-pdp-thumb data-image="{{ product.main_image.url }}" type="button">
+          <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+        </button>
+        {% for image in product.images.all %}
+          <button class="pdp-thumb" data-pdp-thumb data-image="{{ image.image.url }}" type="button">
+            <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}" loading="lazy">
+          </button>
+        {% endfor %}
+      </div>
+      <div class="pdp-main-image-wrap" data-pdp-zoom-wrap>
+        <img id="pdp-main-image" data-pdp-zoom-image src="{% if selected_variant %}{{ selected_variant.image.url }}{% else %}{{ product.main_image.url }}{% endif %}" alt="{{ product.name }}" class="pdp-main-image">
+        <span class="pdp-zoom-lens" data-pdp-zoom-lens></span>
+      </div>
+      <div class="pdp-zoom-preview" data-pdp-zoom-preview aria-hidden="true"></div>
+    </aside>
+
+    <article class="pdp-main">
+      <h1 class="pdp-title">{{ product.name }}</h1>
+      <div class="pdp-store-line">
+        <a href="{% url 'products:product_list' %}">Visit the {{ product.category.name }} Store</a>
+      </div>
+      <div class="pdp-rating-line">
+        <span class="pdp-rating-score">{{ product.rating }}</span>
+        <span class="pdp-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></span>
+        <span class="pdp-review-count">({{ review_count }})</span>
+      </div>
+      <div class="pdp-share-row">
+        <span>Share:</span>
+        <a href="{{ share_links.whatsapp }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="{{ share_links.facebook }}" target="_blank" rel="noopener" aria-label="Share on Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="{{ share_links.x }}" target="_blank" rel="noopener" aria-label="Share on X"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="{{ share_links.linkedin }}" target="_blank" rel="noopener" aria-label="Share on LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="{{ share_links.email }}" aria-label="Share by email"><i class="fa-solid fa-envelope"></i></a>
+      </div>
+
+      <hr class="pdp-divider">
+      <div class="pdp-main-top">
+        <div class="pdp-main-flow">
+          <div class="pdp-price-block">
+            {% if product.discount_percentage > 0 %}
+              <p class="pdp-discount">-{{ product.discount_percentage }}% <span>Deal Price:</span></p>
+            {% endif %}
+            <p class="pdp-price">&#8377; <span id="pdp-price-main">{% if selected_variant %}{{ selected_variant.final_price }}{% else %}{{ product.selling_price }}{% endif %}</span></p>
+            <p class="pdp-tax">Inclusive of all taxes</p>
+            <p class="pdp-emi">EMI starts at &#8377; <span id="pdp-emi-inline">--</span> |
+              <button
+                type="button"
+                class="emi-link-trigger"
+                data-emi-trigger
+                data-product-id="{{ product.id }}"
+                data-model="{% if selected_variant %}{{ product.name }} ({{ selected_variant.color_name }}){% else %}{{ product.name }}{% endif %}"
+                data-price="{% if selected_variant %}{{ selected_variant.final_price }}{% else %}{{ product.selling_price }}{% endif %}"
+                data-qty-selector="#qty"
+              >See EMI options</button>
+            </p>
+          </div>
+
+          {% if variants %}
+            <section class="pdp-variant-block">
+              <h2>Color: <span id="pdp-selected-color">{{ selected_variant.color_name }}</span></h2>
+              <div class="pdp-color-swatch-list">
+                {% for variant in variants %}
+                  <button
+                    type="button"
+                    class="pdp-color-swatch {% if selected_variant and selected_variant.id == variant.id %}is-active{% endif %}"
+                    data-variant-option
+                    data-variant-id="{{ variant.id }}"
+                    data-variant-color="{{ variant.color_name }}"
+                    data-variant-stock="{{ variant.stock }}"
+                    data-variant-image="{{ variant.image.url }}"
+                    data-variant-price="{{ variant.final_price }}"
+                    title="{{ variant.color_name }}"
+                    aria-label="{{ variant.color_name }}"
+                    style="background-color: {{ variant.color_code }};"
+                  ></button>
+                {% endfor %}
+              </div>
+            </section>
+          {% endif %}
+
+          <div id="pdp-sale-alert" class="pdp-sale-alert">
+            <i class="fa-solid fa-fire"></i>
+            <p><strong>{{ product.name }}</strong> is trending now. <span id="pdp-sale-line">8 shoppers purchased this in the last hour.</span></p>
+          </div>
+
+          <section class="pdp-offers">
+            <h2><i class="fa-solid fa-tag"></i> Offers</h2>
+            <div class="pdp-offer-cards">
+              <article><h3>No Cost EMI</h3><p>No cost EMI up to 24 months on select cards.</p></article>
+              <article><h3>Bank Offer</h3><p>Instant discount on leading credit/debit cards.</p></article>
+              <article><h3>Exchange</h3><p>Extra value on old cycle exchange via partners.</p></article>
+              <article><h3>Cashback</h3><p>UPI/Wallet cashback offers during promotions.</p></article>
+            </div>
+            <button type="button" class="pdp-scroll-hint-btn" data-pdp-scroll-down>
+              View More <i class="fa-solid fa-chevron-down"></i>
+            </button>
+          </section>
+
+          <section class="pdp-feature-icons">
+            <div><i class="fa-solid fa-truck-fast"></i><span>Free Delivery</span></div>
+            <div><i class="fa-solid fa-rotate-left"></i><span>10 Days Replacement</span></div>
+            <div><i class="fa-solid fa-shield-heart"></i><span>Warranty Support</span></div>
+            <div><i class="fa-solid fa-lock"></i><span>Secure Transaction</span></div>
+          </section>
+
+          <section class="pdp-trust-band">
+            <article><i class="fa-solid fa-lock"></i><div><h3>100% Secure Payment</h3><p>Razorpay encrypted checkout with signature verification.</p></div></article>
+            <article><i class="fa-solid fa-badge-check"></i><div><h3>Trusted Brand Warranty</h3><p>Official warranty + support from Oalt EV team.</p></div></article>
+            <article><i class="fa-solid fa-handshake-angle"></i><div><h3>Assured After-Sales</h3><p>Service assistance and genuine parts availability.</p></div></article>
+          </section>
+
+          <div class="pdp-image-under-block" id="pdp-more-content">
+            <h3>Why riders choose this model</h3>
+            <div class="pdp-why-grid">
+              <article><i class="fa-solid fa-battery-full"></i><span>10Ah Long-Range Detachable Battery</span></article>
+              <article><i class="fa-solid fa-circle-check"></i><span>Quality Checked</span></article>
+              <article><i class="fa-solid fa-shield-halved"></i><span>Secure Packaging</span></article>
+              <article><i class="fa-solid fa-truck-fast"></i><span>Pan India Delivery</span></article>
+            </div>
+          </div>
+
+        </div>
+
+        <aside class="pdp-side-delivery">
+          <div class="pdp-buy-card" data-buy-rail data-base-price="{% if selected_variant %}{{ selected_variant.final_price }}{% else %}{{ product.selling_price }}{% endif %}">
+        <p class="pdp-buy-price">&#8377; <span id="pdp-buy-price">{% if selected_variant %}{{ selected_variant.final_price }}{% else %}{{ product.selling_price }}{% endif %}</span><sup>00</sup></p>
+        <p class="pdp-buy-delivery">FREE delivery by <strong>Friday</strong>. <a href="#">Details</a></p>
+        <p class="pdp-buy-location"><i class="fa-solid fa-location-dot"></i> Delivering to India - <a href="#">Update location</a></p>
+        <div class="pdp-deliver-card">
+          <h4><i class="fa-solid fa-map-location-dot"></i> Deliver to PIN Code</h4>
+          <div class="pdp-pin-row">
+            <input id="pdp-pin-input" type="text" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit PIN">
+            <button type="button" id="pdp-pin-check">Check</button>
+          </div>
+          <p id="pdp-pin-result" class="pdp-pin-result">Check delivery speed and availability for your area.</p>
+        </div>
+
+        <div class="pdp-protection-card">
+          <h4><i class="fa-solid fa-shield-heart"></i> Protection plan</h4>
+          <label class="pdp-protection-option">
+            <input type="checkbox" id="pdp-protection-toggle">
+            <span>Add 1 Year Extended Warranty</span>
+          </label>
+          <p class="pdp-protection-price">Plan price: <strong id="pdp-protection-price">₹ 0</strong></p>
+        </div>
+
+        <div class="pdp-dispatch-card">
+          <h4><i class="fa-solid fa-truck-ramp-box"></i> Dispatch ETA</h4>
+          <p id="pdp-dispatch-eta">Ships in 24-48 hours for metro locations.</p>
+        </div>
+
+        <p id="pdp-stock-status" class="pdp-stock {% if selected_variant %}{% if selected_variant.stock > 0 %}in{% else %}out{% endif %}{% else %}{% if product.stock > 0 %}in{% else %}out{% endif %}{% endif %}">
+          {% if selected_variant %}
+            {% if selected_variant.stock > 0 %}In stock{% else %}Out of stock{% endif %}
+          {% else %}
+            {% if product.stock > 0 %}In stock{% else %}Out of stock{% endif %}
+          {% endif %}
+        </p>
+        <p class="pdp-seller">Seller: <strong>Oalt EV Technology Pvt. Ltd.</strong></p>
+        <div class="pdp-qty">
+          <label for="qty">Quantity:</label>
+          <select id="qty">
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+
+        <form method="post" action="{% url 'cart:add_to_cart' product.id %}">
+          {% csrf_token %}
+          <input type="hidden" id="pdp-variant-id-input" name="variant_id" value="{% if selected_variant %}{{ selected_variant.id }}{% endif %}">
+          <button id="pdp-add-to-cart-btn" class="pdp-btn pdp-btn-cart" {% if selected_variant %}{% if selected_variant.stock == 0 %}disabled{% endif %}{% else %}{% if product.stock == 0 %}disabled{% endif %}{% endif %}>Add to Cart</button>
+        </form>
+        <div class="pdp-buy-row">
+          <a id="pdp-buy-now-btn" href="{% url 'orders:checkout' %}" class="pdp-btn pdp-btn-buy {% if selected_variant %}{% if selected_variant.stock == 0 %}disabled{% endif %}{% else %}{% if product.stock == 0 %}disabled{% endif %}{% endif %}">Buy Now</a>
+          <button
+            type="button"
+            class="pdp-btn pdp-btn-emi-check"
+            data-emi-trigger
+            data-product-id="{{ product.id }}"
+            data-model="{% if selected_variant %}{{ product.name }} ({{ selected_variant.color_name }}){% else %}{{ product.name }}{% endif %}"
+            data-price="{% if selected_variant %}{{ selected_variant.final_price }}{% else %}{{ product.selling_price }}{% endif %}"
+            data-qty-selector="#qty"
+          >Check EMI</button>
+        </div>
+        <a href="#" class="pdp-btn pdp-btn-wishlist"><i class="fa-regular fa-heart"></i> Add to Wish List</a>
+        <button
+          type="button"
+          id="pdp-compare-btn"
+          class="pdp-btn pdp-btn-compare"
+          data-compare-product
+          data-product-id="{{ product.id }}"
+          data-product-name="{{ product.name }}"
+          data-product-url="{{ product.get_absolute_url }}"
+        >
+          <i class="fa-solid fa-code-compare"></i> Add to Compare
+        </button>
+        <a id="pdp-compare-view-btn" href="#" data-open-compare-popup class="pdp-btn pdp-btn-compare-view">
+          <i class="fa-solid fa-table-columns"></i> View Compare
+        </a>
+        <a class="pdp-btn pdp-btn-whatsapp" target="_blank" href="https://wa.me/{{ whatsapp_phone }}?text=I%20am%20interested%20in%20{{ product.name|urlencode }}"><i class="fa-brands fa-whatsapp"></i> WhatsApp Enquiry</a>
+
+        <div class="pdp-secure-payment-box">
+          <h4><i class="fa-solid fa-shield-halved"></i> Secure payment</h4>
+          <p>Your transaction is protected with encrypted gateway security.</p>
+          <div class="pdp-payment-icons">
+            <span><i class="fa-brands fa-cc-visa"></i></span>
+            <span><i class="fa-brands fa-cc-mastercard"></i></span>
+            <span><i class="fa-solid fa-building-columns"></i></span>
+            <span><i class="fa-solid fa-mobile-screen-button"></i></span>
+          </div>
+        </div>
+        <div class="pdp-trust-checkout">
+          <h4>Guaranteed Safe Checkout</h4>
+          <div class="pdp-trust-icons">
+            <span><i class="fa-brands fa-cc-visa"></i></span>
+            <span><i class="fa-brands fa-cc-mastercard"></i></span>
+            <span><i class="fa-brands fa-cc-amex"></i></span>
+            <span><i class="fa-brands fa-cc-discover"></i></span>
+            <span><i class="fa-solid fa-shield-halved"></i> AES-256</span>
+            <span><i class="fa-brands fa-paypal"></i></span>
+          </div>
+        </div>
+
+        {% if frequently_bought %}
+          <div class="pdp-fbt">
+            <h4><i class="fa-solid fa-cart-plus"></i> Frequently bought together</h4>
+            <div class="pdp-fbt-list">
+              <article>
+                <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+                <div>
+                  <p>{{ product.name|truncatechars:46 }}</p>
+                  <strong>&#8377; {{ product.selling_price }}</strong>
+                </div>
+              </article>
+              {% for item in frequently_bought %}
+                <article>
+                  <img src="{{ item.main_image.url }}" alt="{{ item.name }}" loading="lazy">
+                  <div>
+                    <p>{{ item.name|truncatechars:46 }}</p>
+                    <strong>&#8377; {{ item.selling_price }}</strong>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+            <p class="pdp-fbt-total">Bundle total: <strong>&#8377; {{ bundle_total }}</strong></p>
+            <div class="pdp-fbt-actions">
+              <button type="button" class="pdp-btn pdp-btn-cart" onclick="document.getElementById('pdp-add-to-cart-btn').click()">Add main item to cart</button>
+              <a href="#related" class="pdp-btn pdp-btn-compare-view"><i class="fa-solid fa-layer-group"></i> View Bundle Products</a>
+            </div>
+          </div>
+        {% endif %}
+          </div>
+        </aside>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="pdp-tech-section max-w-[1500px] mx-auto px-4 pb-8">
+  <h2>Product Intelligence Hub</h2>
+  <div class="pdp-tabs-shell">
+    <div class="pdp-tabs-nav" role="tablist" aria-label="Product information tabs">
+      <button class="pdp-tab-btn is-active" data-pdp-tab-trigger data-tab="about" role="tab" aria-selected="true">About this item</button>
+      <button class="pdp-tab-btn" data-pdp-tab-trigger data-tab="technical" role="tab" aria-selected="false">Technical Details</button>
+      <button class="pdp-tab-btn" data-pdp-tab-trigger data-tab="additional" role="tab" aria-selected="false">Additional Information</button>
+      <button class="pdp-tab-btn" data-pdp-tab-trigger data-tab="shipping" role="tab" aria-selected="false">Shipping Terms</button>
+      <button class="pdp-tab-btn" data-pdp-tab-trigger data-tab="doubts" role="tab" aria-selected="false">Still Have Doubts?</button>
+      <button class="pdp-tab-btn" data-pdp-tab-trigger data-tab="faq" role="tab" aria-selected="false">FAQ</button>
+      <button class="pdp-tab-btn" data-pdp-tab-trigger data-tab="reviews" role="tab" aria-selected="false">Review</button>
+    </div>
+
+    <div class="pdp-tab-panel is-active" data-pdp-tab-panel="about" role="tabpanel">
+      <h3>About this item</h3>
+      <div class="pdp-overview-copy">
+        {% for para in overview_paragraphs %}
+          <p>{{ para }}</p>
+        {% endfor %}
+      </div>
+      <ul class="pdp-overview-points">
+        {% for point in about_points %}
+          <li>{{ point }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="pdp-tab-panel" data-pdp-tab-panel="technical" role="tabpanel">
+      <h3>Technical Details</h3>
+      <table>
+        {% for key, value in technical_specs_left %}
+          <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+        {% empty %}
+          <tr><th>Battery Capacity</th><td>{{ product.battery_capacity_kwh }} kWh</td></tr>
+          <tr><th>Range</th><td>{{ product.range_per_charge_km }} km</td></tr>
+          <tr><th>Stock</th><td>{{ product.stock }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="pdp-tab-panel" data-pdp-tab-panel="additional" role="tabpanel">
+      <h3>Additional Information</h3>
+      <table>
+        {% for key, value in technical_specs_right %}
+          <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+        {% empty %}
+          <tr><th>Category</th><td>{{ product.category.name }}</td></tr>
+          <tr><th>Price</th><td>&#8377; {{ product.selling_price }}</td></tr>
+          <tr><th>Last Updated</th><td>{{ product.updated_at|date:"d M Y" }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="pdp-tab-panel" data-pdp-tab-panel="shipping" role="tabpanel">
+      <h3>Shipping Terms</h3>
+      <ul class="pdp-overview-points">
+        {% for term in shipping_terms %}
+          <li>{{ term }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="pdp-tab-panel" data-pdp-tab-panel="doubts" role="tabpanel">
+      <h3>Still Have Doubts?</h3>
+      <p>Our product specialists can help you choose the right model, color variant, and EMI plan.</p>
+      <div class="pdp-doubt-actions">
+        <a href="https://wa.me/{{ whatsapp_phone }}?text=I%20need%20help%20choosing%20the%20right%20product" target="_blank"><i class="fa-brands fa-whatsapp"></i> Chat With Expert</a>
+        <a href="tel:+{{ whatsapp_phone }}"><i class="fa-solid fa-phone"></i> Request Callback</a>
+        <a href="{% url 'dealership:apply' %}"><i class="fa-solid fa-store"></i> Book Test Ride</a>
+      </div>
+    </div>
+
+    <div class="pdp-tab-panel" data-pdp-tab-panel="faq" role="tabpanel">
+      <h3>Frequently Asked Questions</h3>
+      <div class="pdp-faq-grid">
+        {% for faq in faq_items %}
+          <article>
+            <h4>{{ faq.q }}</h4>
+            <p>{{ faq.a }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="pdp-tab-panel" data-pdp-tab-panel="reviews" role="tabpanel">
+      <h3>Customer Review</h3>
+      <div class="pdp-review-box">
+        {% for review in approved_reviews %}
+          <article class="pdp-review-item">
+            <p class="pdp-review-rating"><i class="fa-solid fa-star"></i> {{ review.rating }}/5</p>
+            <p>{{ review.comment }}</p>
+          </article>
+        {% empty %}
+          <p>No approved reviews yet.</p>
+        {% endfor %}
+      </div>
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'products:submit_review' product.slug %}" class="pdp-review-form">
+          {% csrf_token %}
+          {{ review_form.as_p }}
+          <button>Submit Review</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="pdp-related max-w-[1500px] mx-auto px-4 pb-8">
+  <div class="pdp-rail-head">
+    <h2>Related products with free delivery on eligible orders</h2>
+    <div class="pdp-rail-controls">
+      <button class="pdp-rail-btn" data-rail-prev="related"><i class="fa-solid fa-chevron-left"></i></button>
+      <button class="pdp-rail-btn" data-rail-next="related"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+  <div class="pdp-rail" id="related">
+    {% for item in related_products %}
+      {% include "products/partials/product_card.html" with product=item card_class="product-card pdp-rail-card" show_range_title=False show_variant_dots=False show_emi=False subtitle_mode="compact" %}
+    {% endfor %}
+  </div>
+</section>
+
+{% if recent_viewed_products %}
+<section class="pdp-related max-w-[1500px] mx-auto px-4 pb-8">
+  <div class="pdp-rail-head">
+    <h2>Recently viewed by you</h2>
+    <div class="pdp-rail-controls">
+      <button class="pdp-rail-btn" data-rail-prev="recent-viewed"><i class="fa-solid fa-chevron-left"></i></button>
+      <button class="pdp-rail-btn" data-rail-next="recent-viewed"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+  <div class="pdp-rail" id="recent-viewed">
+    {% for item in recent_viewed_products %}
+      {% include "products/partials/product_card.html" with product=item card_class="product-card pdp-rail-card" show_range_title=False show_variant_dots=False show_emi=False subtitle_mode="compact" %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-shell">
+    <aside class="auth-promo">
+      <p class="auth-promo__eyebrow">Oalt EV Account</p>
+      <h2>Simplify Your EV Journey With Our Smart Dashboard.</h2>
+      <p>Track orders, manage profile, save wishlist, and get support updates in one secure place.</p>
+      <div class="auth-promo__chips">
+        <span><i class="fa-solid fa-shield-halved"></i> Secure Login</span>
+        <span><i class="fa-solid fa-gauge-high"></i> Fast Checkout</span>
+      </div>
+      <div class="auth-promo__illustration" aria-hidden="true">
+        <div class="auth-blob auth-blob--one"></div>
+        <div class="auth-blob auth-blob--two"></div>
+        <div class="auth-bike-icon"><i class="fa-solid fa-bicycle"></i></div>
+      </div>
+    </aside>
+
+    <div class="auth-form-pane">
+      <div class="auth-brand">
+        <img src="/media/logo.png" alt="Oalt EV logo" onerror="this.style.display='none'">
+        <span>Oalt EV</span>
+      </div>
+      <h1>Welcome Back</h1>
+      <p class="auth-subtitle">Please login to your account</p>
+
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="auth-alert">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="auth-field-wrap">
+          <label for="{{ form.username.id_for_label }}">Email or Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<p class="auth-error">{{ form.username.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="auth-field-wrap">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          <div class="auth-password-wrap">
+            {{ form.password }}
+            <button type="button" class="auth-eye-btn" data-auth-toggle-password data-target="{{ form.password.id_for_label }}" aria-label="Show password">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          {% if form.password.errors %}<p class="auth-error">{{ form.password.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="auth-meta-row">
+          <a href="{% url 'accounts:password_reset' %}">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="auth-submit-btn">Login</button>
+      </form>
+
+      {% if social_login_enabled %}
+        <div class="auth-divider"><span>Or login with</span></div>
+        <div class="auth-social-grid">
+          {% if social_google_url %}
+            <a href="{{ social_google_url }}" class="auth-social-btn">
+              <i class="fa-brands fa-google"></i> Google
+            </a>
+          {% endif %}
+          {% if social_facebook_url %}
+            <a href="{{ social_facebook_url }}" class="auth-social-btn">
+              <i class="fa-brands fa-facebook-f"></i> Facebook
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <p class="auth-switch-text">
+        Don't have an account?
+        <a href="{% url 'accounts:register' %}">Signup</a>
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Verify Document{% endblock %}
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 py-12">
+  <div class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div class="bg-gradient-to-r from-[#111827] to-[#C02222] px-6 py-7 text-white">
+      <p class="text-sm tracking-wide uppercase font-semibold">Oalt EV Verification Portal</p>
+      <h1 class="text-3xl md:text-4xl font-black mt-1">Document Verification</h1>
+      <p class="mt-2 text-white/90">Scan QR code from invoice or warranty card to validate authenticity.</p>
+    </div>
+
+    <div class="p-6 md:p-8">
+      <div class="rounded-2xl border px-4 py-4
+        {% if verification_status == 'verified' %}
+          border-emerald-200 bg-emerald-50
+        {% elif verification_status == 'invalid' %}
+          border-rose-200 bg-rose-50
+        {% else %}
+          border-amber-200 bg-amber-50
+        {% endif %}
+      ">
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5">
+            {% if verification_status == 'verified' %}
+              <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
+            {% elif verification_status == 'invalid' %}
+              <i class="fa-solid fa-circle-xmark text-rose-600 text-xl"></i>
+            {% else %}
+              <i class="fa-solid fa-circle-info text-amber-600 text-xl"></i>
+            {% endif %}
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-slate-900">{{ status_title }}</h2>
+            <p class="text-slate-700 mt-1">{{ status_text }}</p>
+          </div>
+        </div>
+      </div>
+
+      {% if document_data %}
+        <div class="mt-6 rounded-2xl border border-slate-200 overflow-hidden">
+          <table class="w-full text-sm">
+            <tbody>
+              {% for label, value in document_data %}
+                <tr class="border-b border-slate-100 last:border-b-0">
+                  <th class="w-56 text-left px-4 py-3 font-semibold text-slate-600 bg-slate-50">{{ label }}</th>
+                  <td class="px-4 py-3 font-semibold text-slate-900 break-all">{{ value }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+      <div class="mt-6 text-xs text-slate-500">
+        <p>Need help? Contact <a href="mailto:support@oaltev.com" class="text-[#C02222] font-semibold">support@oaltev.com</a> or call <span class="font-semibold">+91 7291880088</span>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

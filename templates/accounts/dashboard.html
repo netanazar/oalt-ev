@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+<section class="max-w-[1450px] mx-auto px-4 py-8 space-y-6">
+  <header class="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 md:p-8">
+    <p class="text-sm font-semibold text-[#C02222] tracking-wide uppercase">My Dashboard</p>
+    <h1 class="text-3xl md:text-4xl font-black text-slate-900 mt-1">Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
+    <p class="text-slate-600 mt-2">Manage profile settings, track your orders, and raise warranty claims from one place.</p>
+  </header>
+
+  <div class="grid lg:grid-cols-3 gap-5">
+    <article id="profile-settings" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-user-gear text-[#C02222]"></i> Profile Settings</h2>
+      <form method="post" class="mt-4 space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="profile">
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ profile_form.first_name.id_for_label }}">First Name</label>
+          {{ profile_form.first_name }}
+          {% if profile_form.first_name.errors %}<p class="text-xs text-red-600 mt-1">{{ profile_form.first_name.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ profile_form.last_name.id_for_label }}">Last Name</label>
+          {{ profile_form.last_name }}
+          {% if profile_form.last_name.errors %}<p class="text-xs text-red-600 mt-1">{{ profile_form.last_name.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ profile_form.email.id_for_label }}">Email</label>
+          {{ profile_form.email }}
+          {% if profile_form.email.errors %}<p class="text-xs text-red-600 mt-1">{{ profile_form.email.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ profile_form.phone.id_for_label }}">Phone</label>
+          {{ profile_form.phone }}
+          {% if profile_form.phone.errors %}<p class="text-xs text-red-600 mt-1">{{ profile_form.phone.errors|striptags }}</p>{% endif %}
+        </div>
+        <button class="w-full rounded-xl py-3 font-bold text-white bg-[#C02222] hover:bg-[#8e1515] transition">Save Profile</button>
+      </form>
+    </article>
+
+    <article id="order-tracking" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+      <h2 class="text-lg font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-box-open text-[#C02222]"></i> Order Tracking</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full min-w-[880px] text-sm">
+          <thead>
+            <tr class="text-left border-b border-slate-200">
+              <th class="py-2 pr-3 font-semibold text-slate-600">Order #</th>
+              <th class="py-2 pr-3 font-semibold text-slate-600">Products</th>
+              <th class="py-2 pr-3 font-semibold text-slate-600">Date</th>
+              <th class="py-2 pr-3 font-semibold text-slate-600">Status</th>
+              <th class="py-2 pr-3 font-semibold text-slate-600">Amount</th>
+              <th class="py-2 pr-3 font-semibold text-slate-600">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              <tr class="border-b border-slate-100">
+                <td class="py-3 pr-3 font-semibold text-slate-800">{{ order.order_number }}</td>
+                <td class="py-3 pr-3">
+                  <div class="space-y-1.5 min-w-[240px]">
+                    {% for item in order.items.all|slice:":2" %}
+                      <div class="flex items-center gap-2">
+                        {% if item.product.main_image %}
+                          <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="h-8 w-8 rounded-md object-cover border border-slate-200">
+                        {% endif %}
+                        <span class="text-slate-700">{{ item.product.name }}</span>
+                      </div>
+                    {% empty %}
+                      <span class="text-slate-400">No items</span>
+                    {% endfor %}
+                    {% if order.items.count > 2 %}
+                      <p class="text-xs text-slate-500">+{{ order.items.count|add:"-2" }} more</p>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="py-3 pr-3 text-slate-600">{{ order.created_at|date:"d M Y" }}</td>
+                <td class="py-3 pr-3">
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold
+                    {% if order.status == 'delivered' %}bg-emerald-100 text-emerald-700
+                    {% elif order.status == 'shipped' %}bg-blue-100 text-blue-700
+                    {% elif order.status == 'paid' %}bg-violet-100 text-violet-700
+                    {% elif order.status == 'cancelled' %}bg-rose-100 text-rose-700
+                    {% else %}bg-amber-100 text-amber-700{% endif %}">
+                    {{ order.get_status_display }}
+                  </span>
+                </td>
+                <td class="py-3 pr-3 font-bold text-slate-900">&#8377; {{ order.total_amount }}</td>
+                <td class="py-3 pr-3">
+                  <div class="flex flex-col items-start gap-1.5">
+                    <a href="{% url 'orders:order_confirmation' order.order_number %}" class="inline-flex items-center gap-1 text-[#C02222] font-semibold hover:underline">
+                      View <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                    {% if order.status == "delivered" %}
+                      <a href="{% url 'orders:download_invoice' order.order_number %}" class="inline-flex items-center gap-1 text-slate-700 hover:text-[#C02222] font-semibold">
+                        <i class="fa-solid fa-file-invoice"></i> Download Invoice
+                      </a>
+                    {% else %}
+                      <span class="text-xs text-slate-400">Invoice after delivery</span>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="py-5 text-slate-500">No orders yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-5">
+    <article id="warranty-claim" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-id-card text-[#C02222]"></i> Warranty Card Claim</h2>
+      <p class="text-sm text-slate-600 mt-1">Submit claim with order and warranty card details.</p>
+      <form method="post" class="mt-4 space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="warranty_claim">
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ claim_form.order.id_for_label }}">Order</label>
+          {{ claim_form.order }}
+          {% if claim_form.order.errors %}<p class="text-xs text-red-600 mt-1">{{ claim_form.order.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ claim_form.warranty_card_number.id_for_label }}">Warranty Card Number</label>
+          {{ claim_form.warranty_card_number }}
+          {% if claim_form.warranty_card_number.errors %}<p class="text-xs text-red-600 mt-1">{{ claim_form.warranty_card_number.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ claim_form.product_name.id_for_label }}">Product Name</label>
+          {{ claim_form.product_name }}
+          {% if claim_form.product_name.errors %}<p class="text-xs text-red-600 mt-1">{{ claim_form.product_name.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600" for="{{ claim_form.issue_description.id_for_label }}">Issue Description</label>
+          {{ claim_form.issue_description }}
+          {% if claim_form.issue_description.errors %}<p class="text-xs text-red-600 mt-1">{{ claim_form.issue_description.errors|striptags }}</p>{% endif %}
+        </div>
+        <button class="w-full rounded-xl py-3 font-bold text-white bg-[#111827] hover:bg-black transition">Submit Claim</button>
+      </form>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-list-check text-[#C02222]"></i> Claim History</h2>
+      <div class="mt-4 space-y-3 max-h-[420px] overflow-auto pr-1">
+        {% for claim in claims %}
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="font-bold text-slate-900">{{ claim.claim_number }}</p>
+                <p class="text-xs text-slate-500">{{ claim.created_at|date:"d M Y, h:i A" }}</p>
+              </div>
+              <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold
+                {% if claim.status == 'resolved' %}bg-emerald-100 text-emerald-700
+                {% elif claim.status == 'approved' %}bg-blue-100 text-blue-700
+                {% elif claim.status == 'rejected' %}bg-rose-100 text-rose-700
+                {% else %}bg-amber-100 text-amber-700{% endif %}">
+                {{ claim.get_status_display }}
+              </span>
+            </div>
+            <p class="mt-2 text-sm text-slate-700"><strong>Order:</strong> {{ claim.order.order_number }}</p>
+            <p class="text-sm text-slate-700"><strong>Product:</strong> {{ claim.product_name }}</p>
+            <p class="text-sm text-slate-700"><strong>Card #:</strong> {{ claim.warranty_card_number }}</p>
+            <a href="{% url 'accounts:download_warranty_card' claim.claim_number %}" class="mt-2 inline-flex items-center gap-1 text-[#C02222] font-semibold hover:underline">
+              <i class="fa-solid fa-id-card"></i> Download Warranty Card
+            </a>
+          </div>
+        {% empty %}
+          <p class="text-slate-500">No warranty claims submitted yet.</p>
+        {% endfor %}
+      </div>
+    </article>
+  </div>
+</section>
+{% endblock %}

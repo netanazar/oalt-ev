@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<section class="checkout-page-wrap">
+  <div class="max-w-7xl mx-auto px-4 py-10">
+    <header class="checkout-head">
+      <h1><i class="fa-solid fa-bag-shopping"></i> Secure Checkout</h1>
+      <p>Complete your order with encrypted payment and verified delivery details.</p>
+      <div class="checkout-steps">
+        <span class="checkout-step checkout-step--active"><i class="fa-solid fa-location-dot"></i> Shipping Details</span>
+        <span class="checkout-step"><i class="fa-solid fa-credit-card"></i> Payment</span>
+        <span class="checkout-step"><i class="fa-solid fa-circle-check"></i> Confirmation</span>
+      </div>
+    </header>
+
+    {% if not gateway_ready %}
+      <div class="checkout-alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Online payment is temporarily unavailable. You can still place order using Cash on Delivery (COD).</span>
+      </div>
+    {% endif %}
+
+    <div class="checkout-grid">
+      <form method="post" class="checkout-form-card" id="checkout-form-main">
+        {% csrf_token %}
+        <div class="checkout-section-head">
+          <h2><i class="fa-solid fa-truck-fast"></i> Delivery Information</h2>
+          <p>Use an address where someone is available to receive the order.</p>
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="checkout-form-errors">
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="checkout-form-grid">
+          <div class="checkout-field">
+            <label for="{{ form.full_name.id_for_label }}">Full Name</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-regular fa-user"></i>
+              {{ form.full_name }}
+            </div>
+            {% for error in form.full_name.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field">
+            <label for="{{ form.phone.id_for_label }}">Phone</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-solid fa-phone"></i>
+              {{ form.phone }}
+            </div>
+            {% for error in form.phone.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field checkout-field--full">
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-regular fa-envelope"></i>
+              {{ form.email }}
+            </div>
+            {% for error in form.email.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field checkout-field--full">
+            <label for="{{ form.address_line1.id_for_label }}">Address Line 1</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-solid fa-location-dot"></i>
+              {{ form.address_line1 }}
+            </div>
+            {% for error in form.address_line1.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field checkout-field--full">
+            <label for="{{ form.address_line2.id_for_label }}">Address Line 2 (Optional)</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-regular fa-map"></i>
+              {{ form.address_line2 }}
+            </div>
+            {% for error in form.address_line2.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field">
+            <label for="{{ form.city.id_for_label }}">City</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-solid fa-city"></i>
+              {{ form.city }}
+            </div>
+            {% for error in form.city.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field">
+            <label for="{{ form.state.id_for_label }}">State</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-solid fa-map-location-dot"></i>
+              {{ form.state }}
+            </div>
+            {% for error in form.state.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field checkout-field--full">
+            <label for="{{ form.postal_code.id_for_label }}">Postal Code</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-solid fa-hashtag"></i>
+              {{ form.postal_code }}
+            </div>
+            {% for error in form.postal_code.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field checkout-field--full">
+            <label class="checkout-check-wrap" for="{{ form.business_invoice_required.id_for_label }}">
+              {{ form.business_invoice_required }}
+              <span><i class="fa-solid fa-building"></i> Business Invoice Required</span>
+            </label>
+            {% for error in form.business_invoice_required.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="checkout-field checkout-field--full">
+            <label for="{{ form.gst_number.id_for_label }}">GST Number (Optional)</label>
+            <div class="checkout-input-wrap">
+              <i class="fa-solid fa-file-invoice"></i>
+              {{ form.gst_number }}
+            </div>
+            <p class="checkout-field-help">Optional by default. Required only if "Business Invoice Required" is checked.</p>
+            {% for error in form.gst_number.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+
+          <div class="checkout-field checkout-field--full">
+            <label>Payment Method</label>
+            <div class="checkout-payment-methods">
+              <label class="checkout-payment-option {% if not gateway_ready %}is-disabled{% endif %}">
+                <input
+                  type="radio"
+                  name="{{ form.payment_method.name }}"
+                  value="online"
+                  {% if form.payment_method.value == "online" %}checked{% endif %}
+                  {% if not gateway_ready %}disabled{% endif %}
+                >
+                <span>
+                  <strong><i class="fa-solid fa-credit-card"></i> Online Payment</strong>
+                  <small>UPI, Cards, Netbanking via Razorpay</small>
+                </span>
+              </label>
+              <label class="checkout-payment-option">
+                <input type="radio" name="{{ form.payment_method.name }}" value="cod" {% if form.payment_method.value == "cod" %}checked{% endif %}>
+                <span>
+                  <strong><i class="fa-solid fa-money-bill-wave"></i> Cash On Delivery</strong>
+                  <small>Pay at delivery time after order confirmation call.</small>
+                </span>
+              </label>
+            </div>
+            {% for error in form.payment_method.errors %}<p class="checkout-field-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+
+        <div class="checkout-form-actions">
+          <button class="checkout-submit-btn">
+            <span class="checkout-submit-btn__title"><i class="fa-solid fa-check-circle"></i> Place Order</span>
+            <span class="checkout-submit-btn__sub">Select payment method above to continue.</span>
+          </button>
+        </div>
+      </form>
+
+      <aside class="checkout-summary-card">
+        <h2><i class="fa-solid fa-receipt"></i> Order Summary</h2>
+        <p class="checkout-summary-sub">Review your items and total before payment.</p>
+        <div class="checkout-summary-items">
+          {% for item in cart.items.all %}
+            <article class="checkout-summary-item">
+              <div>
+                <h3>{{ item.product.name }}</h3>
+                <p>Qty: {{ item.quantity }}{% if item.variant %} | {{ item.variant.color_name }}{% endif %}</p>
+              </div>
+              <strong>&#8377; {{ item.line_total|floatformat:2 }}</strong>
+            </article>
+          {% endfor %}
+        </div>
+
+        <div class="checkout-summary-total">
+          <div><span>Subtotal</span><strong id="checkout-subtotal">&#8377; {{ cart.subtotal|floatformat:2 }}</strong></div>
+          <div><span>Discount</span><strong id="checkout-discount">- &#8377; {{ cart.discount|floatformat:2 }}</strong></div>
+          <div><span>GST (18%)</span><strong id="checkout-gst">&#8377; {{ cart.gst|floatformat:2 }}</strong></div>
+          <div class="checkout-grand-total"><span>Total Payable</span><strong id="checkout-grand-total">&#8377; {{ cart.grand_total|floatformat:2 }}</strong></div>
+        </div>
+
+        <div class="checkout-summary-meta">
+          <article>
+            <h4><i class="fa-solid fa-truck"></i> Delivery Estimate</h4>
+            <p>{{ eta_from|date:"D, d M" }} - {{ eta_to|date:"D, d M" }}</p>
+          </article>
+          <article>
+            <h4><i class="fa-solid fa-credit-card"></i> Payment Method</h4>
+            <p>{{ payment_method_preview }}</p>
+          </article>
+        </div>
+
+        <details class="checkout-coupon-block">
+          <summary>
+            <span><i class="fa-solid fa-ticket"></i> Apply Coupon</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </summary>
+          <form method="post" action="{% url 'cart:apply_coupon' %}" class="checkout-coupon-form" data-checkout-coupon-form>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'orders:checkout' %}">
+            <input type="text" name="code" placeholder="Enter Coupon Code" aria-label="Coupon code">
+            <button type="submit">Apply</button>
+          </form>
+          <p class="checkout-coupon-status hidden" data-checkout-coupon-status></p>
+        </details>
+
+        <div class="checkout-trust-strip">
+          <span><i class="fa-solid fa-shield-halved"></i> 100% Secure</span>
+          <span><i class="fa-solid fa-receipt"></i> GST Invoice</span>
+          <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="checkout-mobile-bar">
+    <div class="checkout-mobile-bar__amount">
+      <span>Total Payable</span>
+      <strong id="checkout-mobile-grand-total">&#8377; {{ cart.grand_total|floatformat:2 }}</strong>
+    </div>
+    <button type="submit" form="checkout-form-main" class="checkout-mobile-bar__btn">Continue</button>
+  </div>
+
+  <div class="checkout-desktop-micro-rail">
+    <div class="checkout-desktop-micro-rail__amount">
+      <span>Payable</span>
+      <strong id="checkout-desktop-grand-total">&#8377; {{ cart.grand_total|floatformat:2 }}</strong>
+    </div>
+    <button type="submit" form="checkout-form-main" class="checkout-desktop-micro-rail__btn">
+      Place Order
+    </button>
+  </div>
+</section>
+{% endblock %}

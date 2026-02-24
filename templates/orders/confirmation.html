@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmation{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-16">
+  <div class="bg-white p-8 rounded-2xl">
+    <h1 class="text-2xl font-semibold">Order {{ order.order_number }}</h1>
+    <p class="mt-2">Status: {{ order.get_status_display }}</p>
+    <p>Total: &#8377; {{ order.total_amount }}</p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <a href="{% url 'accounts:dashboard' %}" class="inline-flex items-center bg-slate-900 text-white px-6 py-3 rounded-xl">Go to Dashboard</a>
+      {% if order.status == "delivered" %}
+        <a href="{% url 'orders:download_invoice' order.order_number %}" class="inline-flex items-center bg-[#C02222] text-white px-6 py-3 rounded-xl">
+          <i class="fa-solid fa-file-invoice mr-2"></i> Download Invoice
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+

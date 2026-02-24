@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Invoice {{ order.order_number }}</title>
+  <style>
+    :root {
+      --brand: #c02222;
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+      padding: 24px;
+    }
+    .invoice-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .invoice-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(120deg, #fff, #fef2f2);
+    }
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--brand);
+      letter-spacing: .3px;
+    }
+    .meta small {
+      display: block;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .invoice-body {
+      padding: 22px 24px 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .card h4 {
+      margin: 0 0 8px;
+      color: var(--brand);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .card p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    thead th {
+      background: #f8fafc;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #334155;
+      letter-spacing: .3px;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    tbody td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    .item-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .item-title img {
+      width: 46px;
+      height: 46px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .right { text-align: right; }
+    .totals {
+      margin-top: 14px;
+      margin-left: auto;
+      width: 320px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .totals-row:last-child {
+      border-bottom: 0;
+      font-size: 16px;
+      font-weight: 700;
+      background: #fff7f7;
+    }
+    .footer {
+      border-top: 1px solid var(--line);
+      margin-top: 20px;
+      padding: 14px 24px 20px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 720px) {
+      body { padding: 10px; }
+      .grid { grid-template-columns: 1fr; }
+      .totals { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <section class="invoice-wrap">
+    <header class="invoice-head">
+      <div>
+        <div class="brand">Oalt EV Technology Pvt. Ltd.</div>
+        <div class="meta">
+          <small>643/1 First Floor, Mundka More, New Delhi - 110041, India</small>
+          <small>support@oaltev.com | +91 7291880088</small>
+        </div>
+      </div>
+      <div class="meta" style="text-align:right;">
+        <strong>Tax Invoice</strong>
+        <small>Invoice No: INV-{{ order.order_number }}</small>
+        <small>Order No: {{ order.order_number }}</small>
+        <small>Generated: {{ generated_at|date:"d M Y, h:i A" }}</small>
+      </div>
+    </header>
+
+    <div class="invoice-body">
+      <div class="grid">
+        <div class="card">
+          <h4>Billed To</h4>
+          {% if order.shipping_address %}
+            <p><strong>{{ order.shipping_address.full_name }}</strong></p>
+            <p>{{ order.shipping_address.address_line1 }}{% if order.shipping_address.address_line2 %}, {{ order.shipping_address.address_line2 }}{% endif %}</p>
+            <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.postal_code }}</p>
+            <p>Phone: {{ order.shipping_address.phone }}</p>
+            <p>Email: {{ order.shipping_address.email }}</p>
+            {% if order.shipping_address.gst_number %}
+              <p>GSTIN: {{ order.shipping_address.gst_number }}</p>
+            {% endif %}
+          {% else %}
+            <p>Address not available</p>
+          {% endif %}
+        </div>
+        <div class="card">
+          <h4>Order Summary</h4>
+          <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+          <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+          <p><strong>Order Date:</strong> {{ order.created_at|date:"d M Y" }}</p>
+          <p><strong>Delivery Date:</strong> {{ order.updated_at|date:"d M Y" }}</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="right">Qty</th>
+            <th class="right">Unit Price</th>
+            <th class="right">Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+            <tr>
+              <td>
+                <div class="item-title">
+                  {% if item.product.main_image %}
+                    <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}">
+                  {% endif %}
+                  <div>{{ item.product.name }}</div>
+                </div>
+              </td>
+              <td class="right">{{ item.quantity }}</td>
+              <td class="right">&#8377; {{ item.price|floatformat:2 }}</td>
+              <td class="right">&#8377; {{ item.line_total|floatformat:2 }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4">No items found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><strong>&#8377; {{ order.subtotal|floatformat:2 }}</strong></div>
+        <div class="totals-row"><span>Discount</span><strong>- &#8377; {{ order.discount|floatformat:2 }}</strong></div>
+        <div class="totals-row"><span>GST</span><strong>&#8377; {{ order.gst|floatformat:2 }}</strong></div>
+        <div class="totals-row"><span>Total Paid</span><strong>&#8377; {{ order.total_amount|floatformat:2 }}</strong></div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      This is a system-generated invoice for your delivered order. For support, contact Oalt EV Care at support@oaltev.com.
+    </footer>
+  </section>
+</body>
+</html>

@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | Oalt EV{% endblock %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8 lg:py-10 space-y-6">
+  <header class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-red-700">Oalt EV Admin Console</p>
+        <h1 class="mt-1 text-2xl md:text-3xl font-bold text-slate-900">Operations Dashboard</h1>
+        <p class="mt-2 text-slate-600">Category, product, orders, warranty claims, and business reports - all in one place.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-500">Products</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900">{{ total_products }}</p>
+      <p class="mt-2 text-xs text-slate-500">Categories: {{ total_categories }}</p>
+    </article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-500">Orders</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900">{{ total_orders }}</p>
+      <p class="mt-2 text-xs text-slate-500">Payments: {{ total_payments }}</p>
+    </article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-500">Warranty Claims</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900">{{ total_warranty_claims }}</p>
+      <p class="mt-2 text-xs text-slate-500">Coupons: {{ total_coupons }}</p>
+    </article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-500">Leads & Content</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900">{{ total_dealership_applications }}</p>
+      <p class="mt-2 text-xs text-slate-500">Blog posts: {{ total_posts }}</p>
+    </article>
+  </div>
+
+  <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 class="text-lg font-bold text-slate-900">Management Quick Links</h2>
+    <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <a href="{{ dashboard_links.categories }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-layer-group text-red-700"></i> Categories</p>
+        <p class="text-xs text-slate-600 mt-1">Manage category and subcategory tree</p>
+      </a>
+      <a href="{{ dashboard_links.products }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-bicycle text-red-700"></i> Products</p>
+        <p class="text-xs text-slate-600 mt-1">Add/edit products, variants, stock</p>
+      </a>
+      <a href="{{ dashboard_links.orders }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-box-open text-red-700"></i> Orders</p>
+        <p class="text-xs text-slate-600 mt-1">Update status and payment method</p>
+      </a>
+      <a href="{{ dashboard_links.warranty }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-id-card text-red-700"></i> Warranty</p>
+        <p class="text-xs text-slate-600 mt-1">Manage card claims and resolution</p>
+      </a>
+      <a href="{{ dashboard_links.payments }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-money-check-dollar text-red-700"></i> Payments</p>
+        <p class="text-xs text-slate-600 mt-1">Capture/failed/refund tracking</p>
+      </a>
+      <a href="{{ dashboard_links.coupons }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-ticket text-red-700"></i> Coupons</p>
+        <p class="text-xs text-slate-600 mt-1">Discount and campaign control</p>
+      </a>
+      <a href="{{ dashboard_links.dealership }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-handshake text-red-700"></i> Dealership Leads</p>
+        <p class="text-xs text-slate-600 mt-1">Partner inquiries and follow-up</p>
+      </a>
+      <a href="{{ dashboard_links.blog }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-newspaper text-red-700"></i> Blogs</p>
+        <p class="text-xs text-slate-600 mt-1">Publish and optimize content</p>
+      </a>
+      <a href="{{ dashboard_links.home_content }}" class="rounded-xl border border-slate-200 px-4 py-3 hover:border-red-300 hover:bg-red-50">
+        <p class="font-semibold text-slate-900"><i class="fa-solid fa-house-signal text-red-700"></i> Homepage Content</p>
+        <p class="text-xs text-slate-600 mt-1">Hero, banners, sections management</p>
+      </a>
+      <a href="{% url 'core:dashboard' %}#quick-create-category" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 hover:bg-emerald-100">
+        <p class="font-semibold text-emerald-800"><i class="fa-solid fa-plus"></i> Add Category</p>
+        <p class="text-xs text-emerald-700 mt-1">Create category/subcategory instantly</p>
+      </a>
+      <a href="{{ dashboard_links.products }}#new-product-listing" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 hover:bg-emerald-100">
+        <p class="font-semibold text-emerald-800"><i class="fa-solid fa-plus"></i> Add Product</p>
+        <p class="text-xs text-emerald-700 mt-1">List new product from this dashboard</p>
+      </a>
+    </div>
+  </section>
+
+  <section id="reports" class="grid gap-6 xl:grid-cols-3">
+    <article class="xl:col-span-2 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Business Reports</h2>
+          <p class="text-sm text-slate-600">Period: {{ current_month_range }}</p>
+        </div>
+        <form method="get" class="flex flex-wrap items-end gap-2">
+          <label class="text-xs text-slate-600">
+            From
+            <input type="date" name="from_date" value="{{ from_date }}" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          </label>
+          <label class="text-xs text-slate-600">
+            To
+            <input type="date" name="to_date" value="{{ to_date }}" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          </label>
+          <select name="month" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            {% for month_num in month_choices %}
+              <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>{{ month_num }}</option>
+            {% endfor %}
+          </select>
+          <select name="year" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            {% for year_num in year_choices %}
+              <option value="{{ year_num }}" {% if year_num == selected_year %}selected{% endif %}>{{ year_num }}</option>
+            {% endfor %}
+          </select>
+          <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Apply</button>
+          <a href="{% url 'core:dashboard' %}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Reset</a>
+        </form>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs text-slate-500">Orders</p>
+          <p class="text-xl font-bold text-slate-900">{{ order_metrics.total_orders }}</p>
+          <p class="text-xs text-slate-600 mt-1">Delivered: {{ order_metrics.delivered_orders }} | Cancelled: {{ order_metrics.cancelled_orders }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs text-slate-500">Sales Revenue</p>
+          <p class="text-xl font-bold text-slate-900">&#8377; {{ sales_metrics.total_revenue|floatformat:2 }}</p>
+          <p class="text-xs text-slate-600 mt-1">Units Sold: {{ sales_metrics.total_qty }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs text-slate-500">Warranty Claims</p>
+          <p class="text-xl font-bold text-slate-900">{{ claims_metrics.total_claims }}</p>
+          <p class="text-xs text-slate-600 mt-1">Approved: {{ claims_metrics.approved_claims }} | Rejected: {{ claims_metrics.rejected_claims }}</p>
+        </div>
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-2">
+        <div class="rounded-xl border border-slate-200 p-3">
+          <p class="text-sm font-semibold text-slate-800">Payment Split</p>
+          <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
+            <span>Online Orders</span><strong>{{ order_metrics.online_orders }}</strong>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-sm text-slate-700">
+            <span>COD Orders</span><strong>{{ order_metrics.cod_orders }}</strong>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-sm text-slate-700">
+            <span>Gross (Order Total)</span><strong>&#8377; {{ order_metrics.gross_sales|floatformat:2 }}</strong>
+          </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3">
+          <p class="text-sm font-semibold text-slate-800">Claim Pipeline</p>
+          <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
+            <span>Submitted</span><strong>{{ claims_metrics.submitted_claims }}</strong>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-sm text-slate-700">
+            <span>In Review</span><strong>{{ claims_metrics.in_review_claims }}</strong>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-sm text-slate-700">
+            <span>Resolved</span><strong>{{ claims_metrics.resolved_claims }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="{% url 'core:dashboard_export_report' 'orders' %}?{{ report_query_string }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-100">
+          <i class="fa-solid fa-file-arrow-down"></i> Order Report CSV
+        </a>
+        <a href="{% url 'core:dashboard_export_report' 'sales' %}?{{ report_query_string }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-100">
+          <i class="fa-solid fa-file-arrow-down"></i> Sales Report CSV
+        </a>
+        <a href="{% url 'core:dashboard_export_report' 'warranty' %}?{{ report_query_string }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-100">
+          <i class="fa-solid fa-file-arrow-down"></i> Warranty Report CSV
+        </a>
+        <a href="{% url 'core:dashboard_export_report' 'mis' %}?{{ report_query_string }}" class="rounded-lg bg-[#C02222] px-3 py-2 text-sm font-semibold text-white hover:bg-red-800">
+          <i class="fa-solid fa-file-pdf"></i> Monthly MIS PDF
+        </a>
+      </div>
+    </article>
+
+    <aside class="space-y-6">
+      <article id="quick-create-category" class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900">Quick Create Category</h3>
+        <p class="mt-1 text-xs text-slate-600">Use parent selection to create subcategory as well.</p>
+        <form method="post" class="mt-4 space-y-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_category">
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Category Name</label>
+            <input type="text" name="category_name" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Parent Category (Optional)</label>
+            <select name="category_parent" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+              <option value="">Main Category</option>
+              {% for cat in category_options %}
+                <option value="{{ cat.id }}">{{ cat.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Description</label>
+            <textarea name="category_description" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
+          </div>
+          <label class="inline-flex items-center gap-2 text-xs text-slate-700">
+            <input type="checkbox" name="category_is_active" checked class="h-4 w-4 rounded border-slate-300 text-red-700">
+            Active Category
+          </label>
+          <button class="w-full rounded-lg bg-[#C02222] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-800">Create Category</button>
+        </form>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900">Low Stock Alert (<= 5)</h3>
+        <div class="mt-3 space-y-2">
+          {% for p in low_stock_products %}
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm">
+              <p class="font-semibold text-slate-900">{{ p.name }}</p>
+              <p class="text-xs text-slate-600">{{ p.category.name }} | Stock: <strong>{{ p.stock }}</strong></p>
+            </div>
+          {% empty %}
+            <p class="text-sm text-slate-500">No low stock products in threshold.</p>
+          {% endfor %}
+        </div>
+      </article>
+    </aside>
+  </section>
+
+  <section class="grid gap-6 lg:grid-cols-2">
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-lg font-bold text-slate-900">Sales / Orders / Claims Trend</h3>
+        <span class="text-xs text-slate-500">Last 6 Months</span>
+      </div>
+      <div class="mt-4 h-72">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </article>
+
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Payment Mix</h3>
+          <div class="mt-3 h-56">
+            <canvas id="paymentChart"></canvas>
+          </div>
+          <p class="mt-2 text-xs text-slate-500">Total tracked orders: {{ payment_split_total }}</p>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Claim Pipeline Split</h3>
+          <div class="mt-3 h-56">
+            <canvas id="claimChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-2">
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-slate-900">Top Selling Products (Selected Range)</h3>
+      <div class="mt-3 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+              <th class="py-2 pr-3">Product</th>
+              <th class="py-2 pr-3">Category</th>
+              <th class="py-2 pr-3 text-right">Qty</th>
+              <th class="py-2 text-right">Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in monthly_top_products %}
+              <tr class="border-b border-slate-100">
+                <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.product__name }}</td>
+                <td class="py-2 pr-3 text-slate-600">{{ row.product__category__name }}</td>
+                <td class="py-2 pr-3 text-right">{{ row.quantity_sold }}</td>
+                <td class="py-2 text-right font-semibold text-slate-900">&#8377; {{ row.revenue|floatformat:2 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="py-4 text-slate-500">No product sales for selected period.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-slate-900">6-Month Trend Snapshot</h3>
+      <div class="mt-3 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+              <th class="py-2 pr-3">Month</th>
+              <th class="py-2 pr-3 text-right">Orders</th>
+              <th class="py-2 pr-3 text-right">Sales</th>
+              <th class="py-2 text-right">Claims</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in monthly_trend %}
+              <tr class="border-b border-slate-100">
+                <td class="py-2 pr-3 font-semibold text-slate-800">{{ item.label }}</td>
+                <td class="py-2 pr-3 text-right">{{ item.orders }}</td>
+                <td class="py-2 pr-3 text-right">&#8377; {{ item.sales|floatformat:2 }}</td>
+                <td class="py-2 text-right">{{ item.claims }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-2">
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-slate-900">Recent Orders</h3>
+      <div class="mt-3 space-y-2">
+        {% for order in recent_orders %}
+          <div class="rounded-lg border border-slate-200 px-3 py-3">
+            <p class="text-sm font-semibold text-slate-900">{{ order.order_number }}</p>
+            <p class="text-xs text-slate-600 mt-1">{{ order.user.get_full_name|default:order.user.username }} | {{ order.get_status_display }} | {{ order.get_payment_method_display }}</p>
+            <p class="text-xs text-slate-600 mt-1">&#8377; {{ order.total_amount|floatformat:2 }} | {{ order.created_at|date:"d M Y H:i" }}</p>
+          </div>
+        {% empty %}
+          <p class="text-sm text-slate-500">No orders yet.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-slate-900">Recent Warranty Claims (Selected Range)</h3>
+      <div class="mt-3 space-y-2">
+        {% for claim in monthly_claims %}
+          <div class="rounded-lg border border-slate-200 px-3 py-3">
+            <p class="text-sm font-semibold text-slate-900">{{ claim.claim_number }}</p>
+            <p class="text-xs text-slate-600 mt-1">{{ claim.product_name }} | {{ claim.order.order_number }}</p>
+            <p class="text-xs text-slate-600 mt-1">{{ claim.get_status_display }} | {{ claim.created_at|date:"d M Y H:i" }}</p>
+          </div>
+        {% empty %}
+          <p class="text-sm text-slate-500">No warranty claims in selected period.</p>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="text-lg font-bold text-slate-900">Recent Dealership Applications</h3>
+    <div class="mt-3 overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+            <th class="py-2 pr-3">Name</th>
+            <th class="py-2 pr-3">City/State</th>
+            <th class="py-2 pr-3">Phone</th>
+            <th class="py-2">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in recent_dealership_applications %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 pr-3 font-semibold text-slate-900">{{ app.name }}</td>
+              <td class="py-2 pr-3 text-slate-600">{{ app.city }}, {{ app.state }}</td>
+              <td class="py-2 pr-3 text-slate-600">{{ app.phone }}</td>
+              <td class="py-2 text-slate-600">{{ app.created_at|date:"d M Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="py-4 text-slate-500">No dealership applications yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  (() => {
+    const raw = '{{ chart_data_json|escapejs }}';
+    if (!raw) return;
+    const chartData = JSON.parse(raw);
+
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: chartData.trend_labels,
+          datasets: [
+            {
+              label: 'Orders',
+              data: chartData.trend_orders,
+              borderColor: '#0f172a',
+              backgroundColor: 'rgba(15, 23, 42, 0.08)',
+              tension: 0.35,
+              yAxisID: 'y',
+            },
+            {
+              label: 'Sales (INR)',
+              data: chartData.trend_sales,
+              borderColor: '#c02222',
+              backgroundColor: 'rgba(192, 34, 34, 0.12)',
+              tension: 0.35,
+              yAxisID: 'y1',
+            },
+            {
+              label: 'Claims',
+              data: chartData.trend_claims,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              tension: 0.35,
+              yAxisID: 'y',
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } },
+          },
+          plugins: { legend: { position: 'bottom' } },
+        },
+      });
+    }
+
+    const paymentCtx = document.getElementById('paymentChart');
+    if (paymentCtx) {
+      new Chart(paymentCtx, {
+        type: 'doughnut',
+        data: {
+          labels: chartData.payment_labels,
+          datasets: [{ data: chartData.payment_values, backgroundColor: ['#0f172a', '#c02222'], borderWidth: 0 }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
+      });
+    }
+
+    const claimCtx = document.getElementById('claimChart');
+    if (claimCtx) {
+      new Chart(claimCtx, {
+        type: 'bar',
+        data: {
+          labels: chartData.claim_labels,
+          datasets: [{ label: 'Claims', data: chartData.claim_values, backgroundColor: '#c02222' }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+  })();
+</script>
+{% endblock %}

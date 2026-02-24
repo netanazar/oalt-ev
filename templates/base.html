@@ -1,0 +1,469 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Oalt EV{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Premium EV bikes and products by Oalt EV{% endblock %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  {% block extra_head %}{% endblock %}
+  <script defer src="{% static 'js/main.js' %}"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="ticker-wrap">
+    <div class="ticker-track">
+      <div class="ticker-row">
+        <span><i class="fa-solid fa-rocket"></i> New Launch: OALT X Series Electric Bikes</span>
+        <span><i class="fa-solid fa-motorcycle"></i> Free Test Ride Booking Available</span>
+        <span><i class="fa-solid fa-indian-rupee-sign"></i> EMI Starting From &#8377; 2,999/month</span>
+        <span><i class="fa-solid fa-store"></i> Dealer Network Expansion Across India</span>
+      </div>
+      <div class="ticker-row" aria-hidden="true">
+        <span><i class="fa-solid fa-rocket"></i> New Launch: OALT X Series Electric Bikes</span>
+        <span><i class="fa-solid fa-motorcycle"></i> Free Test Ride Booking Available</span>
+        <span><i class="fa-solid fa-indian-rupee-sign"></i> EMI Starting From &#8377; 2,999/month</span>
+        <span><i class="fa-solid fa-store"></i> Dealer Network Expansion Across India</span>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header sticky top-0 z-50">
+    <div class="amazon-nav-shell">
+      <div class="max-w-[1500px] mx-auto px-3 py-2 amazon-nav-top">
+        <a href="{% url 'core:home' %}" class="amazon-logo">
+          <img src="/media/logo.png" alt="Oalt EV" class="h-10 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <span style="display:none;" class="text-xl font-semibold">Oalt EV</span>
+        </a>
+
+        <a href="{% url 'core:contact_us' %}" class="amazon-location">
+          <i class="fa-solid fa-location-dot"></i>
+          <span><small>Delivering to India</small><strong>Update location</strong></span>
+        </a>
+
+        <form action="{% url 'products:product_list' %}" method="get" class="amazon-search">
+          <select name="category">
+            <option value="">All</option>
+            {% for c in nav_categories %}
+              <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>
+                {% if c.parent_id %}-- {% endif %}{{ c.name }}
+              </option>
+            {% endfor %}
+          </select>
+          <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search Oalt EV products">
+          <button type="submit" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+
+        <div class="amazon-account-menu">
+          <a href="{% if user.is_authenticated %}{% url 'accounts:dashboard' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="amazon-top-link amazon-account-trigger" aria-label="Open account menu">
+            <small>{% if user.is_authenticated %}Hello, {{ user.first_name|default:user.username }}{% else %}Hello, sign in{% endif %}</small>
+            <strong>Account & Lists <i class="fa-solid fa-caret-down"></i></strong>
+          </a>
+          <div class="amazon-account-dropdown" role="menu" aria-label="Account and lists">
+            {% if user.is_authenticated %}
+              <p class="amazon-account-dropdown__title">Your Account</p>
+              {% if user.is_staff %}
+                <p class="amazon-account-dropdown__title mt-2">Admin Controls</p>
+                <a href="{% url 'core:dashboard' %}" role="menuitem"><i class="fa-solid fa-chart-line"></i> Admin Dashboard</a>
+                <a href="{% url 'core:dashboard_manage' 'orders' %}" role="menuitem"><i class="fa-solid fa-box-open"></i> Manage Orders</a>
+                <a href="{% url 'core:dashboard_manage' 'products' %}" role="menuitem"><i class="fa-solid fa-bicycle"></i> Manage Products</a>
+                <a href="{% url 'core:dashboard_manage' 'warranty' %}" role="menuitem"><i class="fa-solid fa-id-card"></i> Warranty Claims</a>
+                <a href="{% url 'core:dashboard_manage' 'payments' %}" role="menuitem"><i class="fa-solid fa-money-check-dollar"></i> Payment Logs</a>
+                <a href="{% url 'core:dashboard' %}#reports" role="menuitem"><i class="fa-solid fa-chart-column"></i> Reports & MIS</a>
+                <a href="/admin/" role="menuitem"><i class="fa-solid fa-arrow-up-right-from-square"></i> Django Administration</a>
+              {% endif %}
+              <a href="{% url 'accounts:dashboard' %}" role="menuitem"><i class="fa-regular fa-user"></i> My Dashboard</a>
+              <a href="{% url 'accounts:dashboard' %}#profile-settings" role="menuitem"><i class="fa-solid fa-user-gear"></i> Profile Settings</a>
+              <a href="{% url 'accounts:dashboard' %}#order-tracking" role="menuitem"><i class="fa-solid fa-box-open"></i> My Orders</a>
+              <a href="{% url 'accounts:dashboard' %}#warranty-claim" role="menuitem"><i class="fa-solid fa-id-card"></i> Warranty Claims</a>
+              <a href="{% url 'cart:cart_detail' %}" role="menuitem"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
+              <a href="{% url 'blog:list' %}" role="menuitem"><i class="fa-regular fa-newspaper"></i> Blog</a>
+              <form method="post" action="{% url 'accounts:logout' %}" class="amazon-account-dropdown__logout">
+                {% csrf_token %}
+                <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+              </form>
+            {% else %}
+              <a href="{% url 'accounts:login' %}" class="amazon-account-dropdown__signin-btn" role="menuitem">Sign in</a>
+              <p class="amazon-account-dropdown__new">New customer? <a href="{% url 'accounts:register' %}">Start here</a></p>
+              <p class="amazon-account-dropdown__title">Your Lists</p>
+              <a href="{% url 'accounts:login' %}" role="menuitem"><i class="fa-regular fa-heart"></i> Wishlist</a>
+              <a href="{% url 'accounts:login' %}" role="menuitem"><i class="fa-solid fa-code-compare"></i> Compare List</a>
+              <a href="{% url 'accounts:login' %}" role="menuitem"><i class="fa-solid fa-box-open"></i> Orders</a>
+              <a href="{% url 'accounts:login' %}" role="menuitem"><i class="fa-solid fa-id-card"></i> Warranty Claim</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <a href="{% url 'accounts:dashboard' %}" class="amazon-top-link">
+          <small>Returns</small>
+          <strong>& Orders</strong>
+        </a>
+
+        <a href="{% url 'cart:cart_detail' %}" class="amazon-cart-link">
+          <span class="cart-icon-wrap">
+            <i class="fa-solid fa-cart-shopping"></i>
+            {% if cart_count %}
+              <span class="cart-count-badge">{{ cart_count }}</span>
+            {% endif %}
+          </span>
+          <strong>Cart</strong>
+        </a>
+      </div>
+
+      <div class="amazon-nav-bottom">
+        <div class="max-w-[1500px] mx-auto px-3">
+          <nav class="amazon-menu-row">
+            <a href="{% url 'products:product_list' %}" class="{% if request.resolver_match.namespace == 'products' and request.resolver_match.url_name == 'product_list' %}is-active{% endif %}"><i class="fa-solid fa-bars"></i> All Bikes</a>
+            <a href="#" data-open-compare-popup>Compare <span class="compare-count-badge" data-compare-count>0</span></a>
+            <a href="{% url 'core:about_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'about_us' %}is-active{% endif %}">About Us</a>
+            <a href="{% url 'core:contact_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'contact_us' %}is-active{% endif %}">Contact Us</a>
+            <a href="{% url 'blog:list' %}" class="{% if request.resolver_match.namespace == 'blog' %}is-active{% endif %}">Blog</a>
+            <a href="{% url 'dealership:apply' %}" class="{% if request.resolver_match.namespace == 'dealership' %}is-active{% endif %}">Dealership</a>
+            <a href="{% url 'core:shipping_terms' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'shipping_terms' %}is-active{% endif %}">Shipping & Terms</a>
+            <a href="{% url 'core:return_refund' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'return_refund' %}is-active{% endif %}">Return & Refund</a>
+            <a href="{% url 'core:faq' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'faq' %}is-active{% endif %}">FAQ</a>
+            <a class="amazon-menu-cta" href="https://wa.me/{{ whatsapp_phone }}?text=I%20want%20to%20book%20a%20test%20ride" target="_blank">Book a Test Ride</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-header max-w-7xl mx-auto px-4 py-3">
+      <button id="menu-toggle" class="mobile-icon-btn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <a href="{% url 'core:home' %}" class="mobile-logo">
+        <img src="/media/logo.png" alt="Oalt EV logo" class="h-10 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+        <span style="display:none;" class="font-semibold">Oalt EV</span>
+      </a>
+      <div class="mobile-icons">
+        <a href="{% url 'products:product_list' %}" class="mobile-icon-btn" aria-label="All Bikes"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="#" data-open-compare-popup class="mobile-icon-btn" aria-label="Compare"><i class="fa-solid fa-code-compare"></i></a>
+        <a href="{% url 'cart:cart_detail' %}" class="mobile-icon-btn cart-mobile-btn" aria-label="Cart">
+          <i class="fa-solid fa-cart-shopping"></i>
+          {% if cart_count %}
+            <span class="cart-count-badge cart-count-badge--mobile">{{ cart_count }}</span>
+          {% endif %}
+        </a>
+        <a href="#" class="mobile-icon-btn" aria-label="Wishlist"><i class="fa-regular fa-heart"></i></a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:dashboard' %}" class="mobile-icon-btn" aria-label="User account"><i class="fa-regular fa-user"></i></a>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="mobile-icon-btn" aria-label="Login"><i class="fa-regular fa-user"></i></a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div id="mobile-menu-overlay" class="mobile-menu-overlay hidden" aria-hidden="true">
+    <aside id="mobile-menu-panel" class="mobile-menu-panel" aria-label="Mobile menu">
+      <div class="mobile-menu-head">
+        <img src="/media/logo.png" alt="Oalt EV logo" class="h-10 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+        <span style="display:none;" class="font-semibold">Oalt EV</span>
+        <button id="menu-close" class="mobile-icon-btn" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <nav class="mobile-menu-links">
+        <a href="{% url 'products:product_list' %}" class="{% if request.resolver_match.namespace == 'products' and request.resolver_match.url_name == 'product_list' %}is-active{% endif %}"><i class="fa-solid fa-store"></i> All Bikes</a>
+        <a href="#" data-open-compare-popup><i class="fa-solid fa-code-compare"></i> Compare <span class="compare-count-badge" data-compare-count>0</span></a>
+        <a href="{% url 'core:about_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'about_us' %}is-active{% endif %}"><i class="fa-solid fa-building"></i> About Us</a>
+        <a href="{% url 'core:contact_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'contact_us' %}is-active{% endif %}"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="{% url 'blog:list' %}" class="{% if request.resolver_match.namespace == 'blog' %}is-active{% endif %}"><i class="fa-solid fa-newspaper"></i> Blog</a>
+        <a href="{% url 'dealership:apply' %}" class="{% if request.resolver_match.namespace == 'dealership' %}is-active{% endif %}"><i class="fa-solid fa-handshake"></i> Dealership</a>
+        <a href="{% url 'cart:cart_detail' %}" class="{% if request.resolver_match.namespace == 'cart' %}is-active{% endif %}"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
+        {% if user.is_authenticated %}
+          {% if user.is_staff %}
+            <a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}"><i class="fa-solid fa-chart-line"></i> Admin Dashboard</a>
+            <a href="{% url 'core:dashboard_manage' 'orders' %}"><i class="fa-solid fa-box-open"></i> Manage Orders</a>
+            <a href="{% url 'core:dashboard_manage' 'products' %}"><i class="fa-solid fa-bicycle"></i> Manage Products</a>
+            <a href="{% url 'core:dashboard_manage' 'warranty' %}"><i class="fa-solid fa-id-card"></i> Warranty Claims</a>
+          {% endif %}
+          <a href="{% url 'accounts:dashboard' %}" class="{% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}"><i class="fa-regular fa-user"></i> Dashboard</a>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="{% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'login' %}is-active{% endif %}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        {% endif %}
+      </nav>
+      <a class="mobile-menu-cta" href="https://wa.me/{{ whatsapp_phone }}?text=I%20want%20to%20book%20a%20test%20ride" target="_blank">
+        <i class="fa-solid fa-calendar-check"></i> Book a Test Ride
+      </a>
+    </aside>
+  </div>
+
+  {% if messages %}
+    <div class="flash-stack flash-stack--toast" aria-live="polite">
+      {% for message in messages %}
+        <div
+          class="flash-msg {% if 'cart_reminder' in message.tags %}flash-msg--cart{% elif 'error' in message.tags %}flash-msg--error{% elif 'warning' in message.tags %}flash-msg--warn{% else %}flash-msg--ok{% endif %}"
+          {% if 'cart_reminder' in message.tags %}data-flash-autoclose="5200"{% endif %}
+        >
+          <span class="flash-msg__icon">
+            {% if 'error' in message.tags %}
+              <i class="fa-solid fa-circle-xmark"></i>
+            {% elif 'warning' in message.tags or 'cart_reminder' in message.tags %}
+              <i class="fa-solid fa-bell"></i>
+            {% else %}
+              <i class="fa-solid fa-circle-check"></i>
+            {% endif %}
+          </span>
+          <span>{{ message }}</span>
+          {% if 'cart_reminder' in message.tags %}
+            <span class="flash-progress" aria-hidden="true"><span class="flash-progress-bar"></span></span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <div id="compare-modal" class="compare-modal hidden" aria-hidden="true">
+    <div class="compare-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="compare-modal-title">
+      <button type="button" id="compare-modal-close" class="compare-modal__close" aria-label="Close compare popup">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <section class="compare-modal__step" data-compare-step="select">
+        <header class="compare-modal__header">
+          <h3 id="compare-modal-title">Select 1 more bike to compare</h3>
+          <p id="compare-modal-subtitle">Choose a second model. Compare popup will open immediately.</p>
+        </header>
+        <label class="compare-modal__search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="compare-search-input" placeholder="Search bikes for comparison">
+        </label>
+        <div id="compare-selector-list" class="compare-selector-list"></div>
+      </section>
+
+      <section class="compare-modal__step hidden" data-compare-step="result">
+        <header class="compare-modal__header">
+          <h3>Comparison Result</h3>
+          <p>Side-by-side specs to help customers decide faster.</p>
+        </header>
+        <div id="compare-result-products" class="compare-result-products"></div>
+        <div class="compare-result-table-wrap">
+          <table class="compare-result-table">
+            <tbody id="compare-result-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
+    <a href="{% url 'core:home' %}" class="mobile-bottom-nav__item {% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'home' %}is-active{% endif %}">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </a>
+    <a href="{% url 'products:product_list' %}" class="mobile-bottom-nav__item {% if request.resolver_match.namespace == 'products' and request.resolver_match.url_name == 'product_list' %}is-active{% endif %}">
+      <i class="fa-solid fa-bicycle"></i>
+      <span>All Bikes</span>
+    </a>
+    <a href="{% url 'cart:cart_detail' %}" class="mobile-bottom-nav__item {% if request.resolver_match.namespace == 'cart' %}is-active{% endif %}">
+      <i class="fa-solid fa-cart-shopping"></i>
+      <span>Cart{% if cart_count %} ({{ cart_count }}){% endif %}</span>
+    </a>
+    <a href="#" data-open-compare-popup class="mobile-bottom-nav__item">
+      <i class="fa-solid fa-code-compare"></i>
+      <span>Compare <span class="compare-count-badge" data-compare-count>0</span></span>
+    </a>
+    <a href="{% if user.is_authenticated %}{% url 'accounts:dashboard' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="mobile-bottom-nav__item {% if request.resolver_match.namespace == 'accounts' %}is-active{% endif %}">
+      <i class="fa-regular fa-user"></i>
+      <span>Account</span>
+    </a>
+  </nav>
+
+  <footer class="mt-16">
+    <div class="footer-main">
+      <div class="max-w-7xl mx-auto px-4 py-12 grid md:grid-cols-5 gap-10">
+        <div>
+          <img src="/media/logo.png" alt="Oalt EV" class="h-11 w-auto mb-4" onerror="this.style.display='none'">
+          <p class="footer-intro">Oalt EV is building futuristic electric mobility solutions for daily commuters and adventure riders across India.</p>
+          <p class="footer-contact"><i class="fa-solid fa-phone"></i> {{ whatsapp_phone_display }}</p>
+          <p class="footer-contact"><i class="fa-solid fa-envelope"></i> support@oaltev.com</p>
+          <p class="footer-contact"><i class="fa-solid fa-location-dot"></i> 643/1 First Floor, Mundka, More, Mundka, New Delhi - 110041, India</p>
+        </div>
+        <div>
+          <h4><i class="fa-solid fa-circle-info"></i> About</h4>
+          <a href="{% url 'core:about_us' %}">About Us</a>
+          <a href="{% url 'core:contact_us' %}">Contact Us</a>
+          <a href="{% url 'dealership:apply' %}">Partner With Us</a>
+          <a href="{% url 'blog:list' %}">News & Blogs</a>
+          <a href="#">Manufacturing</a>
+        </div>
+        <div>
+          <h4><i class="fa-solid fa-bicycle"></i> Range</h4>
+          <a href="{% url 'products:product_list' %}">X-Factor</a>
+          <a href="{% url 'products:product_list' %}">Desire</a>
+          <a href="{% url 'products:product_list' %}">Sprint Series</a>
+          <a href="{% url 'products:product_list' %}">Accessories</a>
+        </div>
+        <div>
+          <h4><i class="fa-solid fa-book-open"></i> Popular Articles</h4>
+          <a href="{% url 'blog:list' %}">Decoding Fat Tyre E-cycle</a>
+          <a href="{% url 'blog:list' %}">Best Electric Cycle Under 20000</a>
+          <a href="{% url 'blog:list' %}">Common E-bike Misconceptions</a>
+          <a href="{% url 'blog:list' %}">How EMI Works For EV</a>
+        </div>
+        <div>
+          <h4><i class="fa-solid fa-shield-halved"></i> Assurance</h4>
+          <a href="{% url 'core:warranty_policy' %}">Warranty</a>
+          <a href="#">EMI</a>
+          <a href="#">Service Centers</a>
+          <a href="#">Spare Parts</a>
+          <a href="{% url 'accounts:dashboard' %}">My Account</a>
+        </div>
+      </div>
+      <div class="footer-brand-row">
+        <div class="footer-socials">
+          <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+        </div>
+        <div class="footer-legal-links">
+          <a href="{% url 'core:privacy_policy' %}">Privacy Policy</a>
+          <a href="{% url 'core:terms_conditions' %}">Terms & Conditions</a>
+          <a href="{% url 'core:return_refund' %}">Return & Refund</a>
+          <a href="{% url 'core:shipping_terms' %}">Shipping Terms</a>
+          <a href="{% url 'core:disclaimer' %}">Disclaimer</a>
+          <a href="{% url 'core:cancellation_policy' %}">Cancellation Policy</a>
+          <a href="{% url 'core:faq' %}">FAQ</a>
+          <a href="{% url 'core:cookies_policy' %}">Cookies Policy</a>
+        </div>
+      </div>
+      <div class="footer-trust-strip">
+        <h4>Guaranteed Safe Checkout</h4>
+        <div class="footer-trust-icons">
+          <span><i class="fa-brands fa-cc-visa"></i></span>
+          <span><i class="fa-brands fa-cc-mastercard"></i></span>
+          <span><i class="fa-brands fa-cc-amex"></i></span>
+          <span><i class="fa-brands fa-cc-discover"></i></span>
+          <span><i class="fa-solid fa-shield-halved"></i> AES-256</span>
+          <span><i class="fa-brands fa-paypal"></i></span>
+        </div>
+      </div>
+      <div class="footer-copy">
+        <p>Copyright © Oalt EV Technology Pvt. Ltd. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="floating-actions" aria-label="Quick actions">
+    <a href="tel:+{{ whatsapp_phone }}"
+       class="floating-action-btn floating-call"
+       aria-label="Call Oalt EV">
+      <i class="fa-solid fa-phone"></i>
+      <span class="floating-tooltip">Click to talk our sales team</span>
+    </a>
+
+    <a href="https://wa.me/{{ whatsapp_phone }}?text=I%20am%20interested%20in%20Oalt%20EV"
+       target="_blank"
+       class="floating-action-btn floating-whatsapp"
+       aria-label="WhatsApp Oalt EV">
+      <i class="fa-brands fa-whatsapp"></i>
+       <span class="floating-tooltip">Click to chat with our experts</span>
+    </a>
+  </div>
+
+  <button
+    id="scroll-top-btn"
+    type="button"
+    class="floating-action-btn floating-scroll-top"
+    aria-label="Scroll to top">
+    <i class="fa-solid fa-arrow-up"></i>
+    <span class="floating-tooltip">Scroll to top</span>
+  </button>
+
+  <div id="scroll-popup" class="popup-overlay hidden">
+    <div class="popup-card">
+      <button id="popup-close" class="popup-close-btn" aria-label="Close">x</button>
+      <h3 class="text-2xl font-semibold">Ride Into the Green Future</h3>
+      <p class="mt-2 text-slate-600">Book your free Oalt EV test ride and get launch offe? </p>
+      <a href="{% url 'products:product_list' %}" class="popup-cta">Explore Now</a>
+    </div>
+  </div>
+
+  <div id="emi-popup-overlay" class="emi-popup-overlay hidden" aria-hidden="true">
+    <div class="emi-popup-card" role="dialog" aria-modal="true" aria-labelledby="emi-popup-title">
+      <button id="emi-popup-close" class="emi-popup-close" aria-label="Close EMI popup"><i class="fa-solid fa-xmark"></i></button>
+      <h3 id="emi-popup-title">Calculate EMI</h3>
+
+      <form id="emi-calc-form" class="emi-calc-form">
+        <input type="hidden" id="emi-popup-product-id">
+        <input type="hidden" id="emi-popup-selected-tenure" value="12">
+        <div class="emi-calc-grid">
+          <label>Model
+            <input type="text" id="emi-popup-model" readonly>
+          </label>
+          <label>Unit Price (INR)
+            <input type="number" id="emi-popup-price" readonly>
+          </label>
+          <label>Quantity
+            <input type="number" id="emi-popup-qty" min="1" value="1" readonly>
+          </label>
+          <label>Down Payment
+            <input type="number" id="emi-popup-down" min="0" value="0" required>
+          </label>
+          <label>Month
+            <select id="emi-popup-month">
+              <option value="6">6</option>
+              <option value="9">9</option>
+              <option value="12" selected>12</option>
+              <option value="18">18</option>
+            </select>
+          </label>
+          <label>Interest Rate
+            <select id="emi-popup-rate">
+              <option value="9">9%</option>
+              <option value="12" selected>12%</option>
+              <option value="15">15%</option>
+              <option value="18">18%</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" id="emi-popup-check-btn" class="emi-popup-check-btn">Check EMI</button>
+      </form>
+
+      <div id="emi-popup-results" class="emi-popup-results hidden">
+        <h4>EMI Chart Sheet</h4>
+        <div id="emi-popup-chart" class="emi-popup-chart"></div>
+      </div>
+
+      <form id="emi-offer-form" class="emi-offer-form hidden">
+        <h4>Get Best EMI Deal</h4>
+        <label>Model Name
+          <input type="text" id="emi-offer-model" readonly>
+        </label>
+        <label>Name
+          <input type="text" id="emi-offer-name" required>
+        </label>
+        <label>Mobile Number
+          <input type="tel" id="emi-offer-mobile" required>
+        </label>
+        <label>Email Id
+          <input type="email" id="emi-offer-email" required>
+        </label>
+        <button type="submit" id="emi-offer-submit-btn">Get Deal</button>
+      </form>
+
+      <p id="emi-popup-feedback" class="emi-popup-feedback"></p>
+    </div>
+  </div>
+
+  <script>
+    /* Chatbot placeholder: replace with Tawk.to or custom AI script */
+    window.__OALT_CHAT_PLACEHOLDER__ = true;
+    window.__EMI_LEAD_ENDPOINT__ = "{% url 'products:submit_emi_lead' %}";
+    window.__COMPARE_OPTIONS_ENDPOINT__ = "{% url 'products:compare_options_api' %}";
+    window.__COMPARE_DATA_ENDPOINT__ = "{% url 'products:compare_data_api' %}";
+  </script>
+  {% block structured_data %}{% endblock %}
+</body>
+</html>
+

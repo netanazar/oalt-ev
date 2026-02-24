@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+{% block title %}{{ section_meta.title }} | Oalt EV Admin{% endblock %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8 lg:py-10 space-y-6">
+  <header class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-red-700">Oalt EV Admin Console</p>
+        <h1 class="mt-1 text-2xl md:text-3xl font-bold text-slate-900">
+          <i class="fa-solid {{ section_meta.icon }} text-red-700"></i> {{ section_meta.title }}
+        </h1>
+        <p class="mt-2 text-slate-600">Custom dashboard control panel (same admin console). Period: {{ current_month_range }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="{% url 'core:dashboard' %}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Dashboard Home</a>
+        <a href="{{ admin_url }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900">Open Django Administration</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid gap-6 lg:grid-cols-[280px_1fr]">
+    <aside class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 class="text-sm font-semibold text-slate-700">Management Sections</h2>
+      <nav class="mt-3 space-y-1">
+        {% for key, meta in sections.items %}
+          <a
+            href="{% url 'core:dashboard_manage' key %}"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm {% if section == key %}bg-red-50 text-red-700 font-semibold border border-red-200{% else %}text-slate-700 hover:bg-slate-100{% endif %}">
+            <i class="fa-solid {{ meta.icon }}"></i> {{ meta.title }}
+          </a>
+        {% endfor %}
+      </nav>
+    </aside>
+
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <form method="get" class="flex flex-wrap items-end gap-2">
+        <label class="text-xs text-slate-600">
+          Search
+          <input type="text" name="q" value="{{ search_query }}" placeholder="Search..." class="mt-1 w-56 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        </label>
+        <label class="text-xs text-slate-600">
+          From
+          <input type="date" name="from_date" value="{{ from_date }}" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        </label>
+        <label class="text-xs text-slate-600">
+          To
+          <input type="date" name="to_date" value="{{ to_date }}" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        </label>
+        <select name="month" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          {% for month_num in month_choices %}
+            <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>{{ month_num }}</option>
+          {% endfor %}
+        </select>
+        <select name="year" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          {% for year_num in year_choices %}
+            <option value="{{ year_num }}" {% if year_num == selected_year %}selected{% endif %}>{{ year_num }}</option>
+          {% endfor %}
+        </select>
+        <button class="rounded-lg bg-[#C02222] px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Apply</button>
+      </form>
+
+      <div class="mt-5 overflow-x-auto">
+        {% if section == "categories" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Name</th>
+                <th class="py-2 pr-3">Parent</th>
+                <th class="py-2 pr-3">Slug</th>
+                <th class="py-2 pr-3">Status</th>
+                <th class="py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.name }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.parent.name|default:"-" }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.slug }}</td>
+                  <td class="py-2 pr-3">
+                    {% if row.is_active %}
+                      <span class="rounded bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Active</span>
+                    {% else %}
+                      <span class="rounded bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-2">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="toggle_category">
+                      <input type="hidden" name="category_id" value="{{ row.id }}">
+                      <button class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Toggle</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "products" %}
+          <section id="new-product-listing" class="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-slate-900">List A New Product</h3>
+                <p class="text-xs text-slate-600">Amazon-style quick listing: title, pricing, stock, battery/range, and hero image.</p>
+              </div>
+              <span class="rounded-full bg-[#C02222] px-3 py-1 text-xs font-semibold text-white">Seller Listing</span>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="mt-4 space-y-3">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="create_product">
+
+              {% if product_create_form.non_field_errors %}
+                <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {{ product_create_form.non_field_errors }}
+                </div>
+              {% endif %}
+
+              <div class="grid gap-3 md:grid-cols-2">
+                <label class="text-xs font-semibold text-slate-700">
+                  Category
+                  {{ product_create_form.category }}
+                  {% if product_create_form.category.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.category.errors|striptags }}</span>{% endif %}
+                </label>
+                <label class="text-xs font-semibold text-slate-700">
+                  Product Name
+                  {{ product_create_form.name }}
+                  {% if product_create_form.name.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.name.errors|striptags }}</span>{% endif %}
+                </label>
+              </div>
+
+              <label class="text-xs font-semibold text-slate-700 block">
+                Short Description
+                {{ product_create_form.short_description }}
+                {% if product_create_form.short_description.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.short_description.errors|striptags }}</span>{% endif %}
+              </label>
+
+              <div class="grid gap-3 md:grid-cols-4">
+                <label class="text-xs font-semibold text-slate-700">
+                  Price (INR)
+                  {{ product_create_form.price }}
+                  {% if product_create_form.price.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.price.errors|striptags }}</span>{% endif %}
+                </label>
+                <label class="text-xs font-semibold text-slate-700">
+                  Discount Price (INR)
+                  {{ product_create_form.discount_price }}
+                  {% if product_create_form.discount_price.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.discount_price.errors|striptags }}</span>{% endif %}
+                </label>
+                <label class="text-xs font-semibold text-slate-700">
+                  Battery (kWh)
+                  {{ product_create_form.battery_capacity_kwh }}
+                  {% if product_create_form.battery_capacity_kwh.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.battery_capacity_kwh.errors|striptags }}</span>{% endif %}
+                </label>
+                <label class="text-xs font-semibold text-slate-700">
+                  Range (km)
+                  {{ product_create_form.range_per_charge_km }}
+                  {% if product_create_form.range_per_charge_km.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.range_per_charge_km.errors|striptags }}</span>{% endif %}
+                </label>
+              </div>
+
+              <div class="grid gap-3 md:grid-cols-2">
+                <label class="text-xs font-semibold text-slate-700">
+                  Stock
+                  {{ product_create_form.stock }}
+                  {% if product_create_form.stock.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.stock.errors|striptags }}</span>{% endif %}
+                </label>
+                <label class="text-xs font-semibold text-slate-700">
+                  Main Product Image
+                  {{ product_create_form.main_image }}
+                  {% if product_create_form.main_image.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.main_image.errors|striptags }}</span>{% endif %}
+                </label>
+              </div>
+
+              <label class="text-xs font-semibold text-slate-700 block">
+                Description
+                {{ product_create_form.description }}
+                {% if product_create_form.description.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.description.errors|striptags }}</span>{% endif %}
+              </label>
+
+              <div class="grid gap-3 md:grid-cols-2">
+                <label class="text-xs font-semibold text-slate-700">
+                  Meta Title
+                  {{ product_create_form.meta_title }}
+                  {% if product_create_form.meta_title.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.meta_title.errors|striptags }}</span>{% endif %}
+                </label>
+                <label class="text-xs font-semibold text-slate-700">
+                  Meta Description
+                  {{ product_create_form.meta_description }}
+                  {% if product_create_form.meta_description.errors %}<span class="mt-1 block text-red-600">{{ product_create_form.meta_description.errors|striptags }}</span>{% endif %}
+                </label>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-700">{{ product_create_form.is_featured }} Featured Product</label>
+                <label class="inline-flex items-center gap-2 text-sm text-slate-700">{{ product_create_form.is_active }} Active Listing</label>
+              </div>
+
+              <button class="rounded-lg bg-[#C02222] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-800">
+                <i class="fa-solid fa-plus"></i> List Product
+              </button>
+            </form>
+          </section>
+
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Product</th>
+                <th class="py-2 pr-3">Category</th>
+                <th class="py-2 pr-3">Price (INR)</th>
+                <th class="py-2 pr-3">Stock</th>
+                <th class="py-2">Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.name }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.category.name }}</td>
+                  <td class="py-2 pr-3 text-slate-600">&#8377; {{ row.selling_price|floatformat:2 }}</td>
+                  <td class="py-2 pr-3">
+                    <form method="post" class="flex items-center gap-2">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="update_product">
+                      <input type="hidden" name="product_id" value="{{ row.id }}">
+                      <input type="number" name="stock" min="0" value="{{ row.stock }}" class="w-20 rounded border border-slate-300 px-2 py-1">
+                      <label class="inline-flex items-center gap-1 text-xs">
+                        <input type="checkbox" name="is_active" {% if row.is_active %}checked{% endif %}>
+                        Active
+                      </label>
+                      <label class="inline-flex items-center gap-1 text-xs">
+                        <input type="checkbox" name="is_featured" {% if row.is_featured %}checked{% endif %}>
+                        Featured
+                      </label>
+                      <button class="rounded bg-[#C02222] px-2 py-1 text-xs font-semibold text-white hover:bg-red-800">Save</button>
+                    </form>
+                  </td>
+                  <td class="py-2">
+                    {% if row.main_image %}
+                      <img src="{{ row.main_image.url }}" alt="{{ row.name }}" class="h-12 w-16 rounded object-cover border border-slate-200">
+                    {% else %}
+                      <span class="text-xs text-slate-400">No image</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "orders" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Order</th>
+                <th class="py-2 pr-3">Customer</th>
+                <th class="py-2 pr-3">Amount</th>
+                <th class="py-2 pr-3">Status</th>
+                <th class="py-2 pr-3">Payment</th>
+                <th class="py-2">Update</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.order_number }}<br><span class="text-xs text-slate-500">{{ row.created_at|date:"d M Y H:i" }}</span></td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.user.get_full_name|default:row.user.username }}</td>
+                  <td class="py-2 pr-3 text-slate-700">&#8377; {{ row.total_amount|floatformat:2 }}</td>
+                  <td class="py-2 pr-3 text-slate-700">{{ row.get_status_display }}</td>
+                  <td class="py-2 pr-3 text-slate-700">{{ row.get_payment_method_display }}</td>
+                  <td class="py-2 pr-3">
+                    <form method="post" class="flex flex-wrap items-center gap-2">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="update_order">
+                      <input type="hidden" name="order_id" value="{{ row.id }}">
+                      <select name="status" class="rounded border border-slate-300 px-2 py-1 text-xs">
+                        {% for value, label in status_choices %}
+                          <option value="{{ value }}" {% if row.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                      <select name="payment_method" class="rounded border border-slate-300 px-2 py-1 text-xs">
+                        {% for value, label in payment_method_choices %}
+                          <option value="{{ value }}" {% if row.payment_method == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                      <button class="rounded bg-[#C02222] px-2 py-1 text-xs font-semibold text-white hover:bg-red-800">Update</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "warranty" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Claim</th>
+                <th class="py-2 pr-3">Order</th>
+                <th class="py-2 pr-3">Product</th>
+                <th class="py-2 pr-3">Customer</th>
+                <th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.claim_number }}<br><span class="text-xs text-slate-500">{{ row.created_at|date:"d M Y H:i" }}</span></td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.order.order_number }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.product_name }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.user.get_full_name|default:row.user.username }}</td>
+                  <td class="py-2">
+                    <form method="post" class="flex items-center gap-2">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="update_claim">
+                      <input type="hidden" name="claim_id" value="{{ row.id }}">
+                      <select name="status" class="rounded border border-slate-300 px-2 py-1 text-xs">
+                        {% for value, label in claim_status_choices %}
+                          <option value="{{ value }}" {% if row.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                      <button class="rounded bg-[#C02222] px-2 py-1 text-xs font-semibold text-white hover:bg-red-800">Update</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "payments" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Order</th>
+                <th class="py-2 pr-3">Amount</th>
+                <th class="py-2 pr-3">Provider IDs</th>
+                <th class="py-2 pr-3">Status</th>
+                <th class="py-2">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.order.order_number }}</td>
+                  <td class="py-2 pr-3 text-slate-600">&#8377; {{ row.amount|floatformat:2 }}</td>
+                  <td class="py-2 pr-3 text-xs text-slate-600">{{ row.provider_order_id|default:"-" }}<br>{{ row.provider_payment_id|default:"-" }}</td>
+                  <td class="py-2 pr-3">{{ row.get_status_display }}</td>
+                  <td class="py-2 text-slate-600">{{ row.updated_at|date:"d M Y H:i" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "coupons" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Code</th>
+                <th class="py-2 pr-3">Discount</th>
+                <th class="py-2 pr-3">Validity</th>
+                <th class="py-2 pr-3">Usage Limit</th>
+                <th class="py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.code }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.discount_percent }}%</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.valid_from|date:"d M Y" }} - {{ row.valid_to|date:"d M Y" }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.usage_limit }}</td>
+                  <td class="py-2">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="toggle_coupon">
+                      <input type="hidden" name="coupon_id" value="{{ row.id }}">
+                      <button class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold {% if row.active %}text-emerald-700{% else %}text-slate-700{% endif %} hover:bg-slate-100">
+                        {% if row.active %}Deactivate{% else %}Activate{% endif %}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "dealership" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Name</th>
+                <th class="py-2 pr-3">City/State</th>
+                <th class="py-2 pr-3">Investment</th>
+                <th class="py-2 pr-3">Phone</th>
+                <th class="py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.name }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.city }}, {{ row.state }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.investment_capacity }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.phone }}</td>
+                  <td class="py-2 text-slate-600">{{ row.created_at|date:"d M Y H:i" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "blog" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Title</th>
+                <th class="py-2 pr-3">Slug</th>
+                <th class="py-2 pr-3">Published On</th>
+                <th class="py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.title }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.slug }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.published_at|date:"d M Y" }}</td>
+                  <td class="py-2">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="toggle_blog">
+                      <input type="hidden" name="post_id" value="{{ row.id }}">
+                      <button class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold {% if row.is_published %}text-emerald-700{% else %}text-slate-700{% endif %} hover:bg-slate-100">
+                        {% if row.is_published %}Unpublish{% else %}Publish{% endif %}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        {% elif section == "home-content" %}
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th class="py-2 pr-3">Key</th>
+                <th class="py-2 pr-3">Heading</th>
+                <th class="py-2 pr-3">CTA</th>
+                <th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in page_obj %}
+                <tr class="border-b border-slate-100">
+                  <td class="py-2 pr-3 font-semibold text-slate-900">{{ row.key }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.heading|default:"-" }}</td>
+                  <td class="py-2 pr-3 text-slate-600">{{ row.cta_text|default:"-" }}</td>
+                  <td class="py-2">
+                    {% if row.is_active %}
+                      <span class="rounded bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Active</span>
+                    {% else %}
+                      <span class="rounded bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">Inactive</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="py-4 text-slate-500">No records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+      </div>
+
+      {% if page_obj.has_other_pages %}
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+          {% if page_obj.has_previous %}
+            <a href="?q={{ search_query }}&from_date={{ from_date }}&to_date={{ to_date }}&month={{ selected_month }}&year={{ selected_year }}&page={{ page_obj.previous_page_number }}" class="rounded border border-slate-300 px-3 py-1 hover:bg-slate-100">Previous</a>
+          {% endif %}
+          <span class="rounded border border-slate-200 px-3 py-1">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+            <a href="?q={{ search_query }}&from_date={{ from_date }}&to_date={{ to_date }}&month={{ selected_month }}&year={{ selected_year }}&page={{ page_obj.next_page_number }}" class="rounded border border-slate-300 px-3 py-1 hover:bg-slate-100">Next</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </article>
+  </div>
+</section>
+{% endblock %}

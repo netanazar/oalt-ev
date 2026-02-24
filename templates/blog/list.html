@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Oalt EV Blog{% endblock %}
+{% block meta_description %}Read Oalt EV Knowledge Hub for practical electric cycle buying tips, battery care guides, and ownership best practices.{% endblock %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-12">
+  <h1 class="text-4xl font-extrabold mb-2 text-slate-900">Oalt EV Knowledge Hub</h1>
+  <p class="text-slate-600 mb-8">Actionable EV insights, battery guidance, and smart ownership tips for Indian riders.</p>
+  <div class="grid md:grid-cols-3 gap-6">
+    {% for post in posts %}
+      <a href="{% url 'blog:detail' post.slug %}" class="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl transition">
+        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full h-52 object-cover" loading="lazy" decoding="async">
+        <div class="p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-red-700">Oalt EV Blog</p>
+          <h2 class="font-bold text-xl text-slate-900 mt-1">{{ post.title }}</h2>
+          <p class="text-sm text-slate-600 mt-3">{{ post.excerpt }}</p>
+          <span class="inline-flex mt-4 items-center gap-2 text-white rounded-full px-4 py-2 font-semibold" style="background:linear-gradient(120deg,#C02222,#000000);">Read Article <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
+      </a>
+    {% empty %}
+      <div class="md:col-span-3 bg-white border border-slate-200 rounded-2xl p-8 text-slate-600">
+        No blog posts available yet.
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

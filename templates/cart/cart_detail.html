@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Your Cart{% endblock %}
+{% block content %}
+<section class="cart-page-wrap">
+  <div class="max-w-[1500px] mx-auto px-4 py-8 cart-layout">
+    <div class="cart-main">
+      <header class="cart-head">
+        <h1>Shopping Cart</h1>
+        <p>Price</p>
+      </header>
+
+      {% for item in cart_items %}
+        <article class="cart-item-row">
+          <a href="{{ item.product.get_absolute_url }}" class="cart-item-image">
+            <img src="{% if item.variant and item.variant.image %}{{ item.variant.image.url }}{% else %}{{ item.product.main_image.url }}{% endif %}" alt="{{ item.product.name }}" loading="lazy" decoding="async">
+          </a>
+
+          <div class="cart-item-body">
+            <a href="{{ item.product.get_absolute_url }}" class="cart-item-title">{{ item.product.name }}</a>
+            <p class="cart-item-seller">Sold by Oalt EV Technology Pvt. Ltd.</p>
+            <p class="cart-item-delivery">FREE delivery between {{ eta_from|date:"D, j M" }} - {{ eta_to|date:"D, j M" }}</p>
+            {% if item.variant %}
+              <p class="cart-item-meta">Colour: <strong>{{ item.variant.color_name }}</strong></p>
+            {% endif %}
+
+            <div class="cart-item-actions">
+              <form method="post" action="{% url 'cart:update_cart_item' item.id %}" class="cart-qty-form">
+                {% csrf_token %}
+                <input type="number" min="1" name="quantity" value="{{ item.quantity }}">
+                <button type="submit" class="cart-link-btn">Update</button>
+              </form>
+              <form method="post" action="{% url 'cart:remove_cart_item' item.id %}">
+                {% csrf_token %}
+                <button type="submit" class="cart-link-btn">Delete</button>
+              </form>
+              <a href="{{ item.product.get_absolute_url }}" class="cart-link-btn">See more like this</a>
+            </div>
+          </div>
+
+          <div class="cart-item-price">
+            <strong>&#8377; {{ item.line_total|floatformat:2 }}</strong>
+            <p>&#8377; {{ item.unit_price|floatformat:2 }} each</p>
+          </div>
+        </article>
+      {% empty %}
+        <div class="cart-empty">
+          <h2>Your cart is empty</h2>
+          <p>Looks like you have not added any bikes yet.</p>
+          <a href="{% url 'products:product_list' %}" class="cart-empty-cta">Explore All Bikes</a>
+        </div>
+      {% endfor %}
+
+      {% if cart_items %}
+        <footer class="cart-subtotal-line">
+          Subtotal ({{ cart_item_count }} item{{ cart_item_count|pluralize }}): <strong>&#8377; {{ cart.items_total|floatformat:2 }}</strong>
+        </footer>
+      {% endif %}
+    </div>
+
+    <aside class="cart-side">
+      <div class="cart-summary-card">
+        <form method="post" action="{% url 'cart:apply_coupon' %}" class="cart-coupon-form">
+          {% csrf_token %}
+          <input type="text" name="code" placeholder="Coupon code">
+          <button type="submit">Apply</button>
+        </form>
+
+        <div class="cart-summary-row"><span>Subtotal (Excl. GST)</span><strong>&#8377; {{ cart.subtotal|floatformat:2 }}</strong></div>
+        <div class="cart-summary-row"><span>Discount</span><strong>- &#8377; {{ cart.discount|floatformat:2 }}</strong></div>
+        <div class="cart-summary-row"><span>GST (18%)</span><strong>&#8377; {{ cart.gst|floatformat:2 }}</strong></div>
+        <div class="cart-summary-total"><span>Total</span><strong>&#8377; {{ cart.grand_total|floatformat:2 }}</strong></div>
+
+        <a href="{% url 'orders:checkout' %}" class="cart-checkout-btn">Proceed to Checkout</a>
+
+        <div class="cart-trust-badges">
+          <span><i class="fa-solid fa-shield-halved"></i> Secure Payment</span>
+          <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
+          <span><i class="fa-solid fa-medal"></i> Trusted Brand</span>
+        </div>
+      </div>
+
+      {% if recommendations %}
+        <div class="cart-reco-card">
+          <h3>Customers also viewed</h3>
+          {% for product in recommendations %}
+            <article class="cart-reco-item">
+              <a href="{{ product.get_absolute_url }}" class="cart-reco-image">
+                <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+              </a>
+              <div>
+                <a href="{{ product.get_absolute_url }}" class="cart-reco-title">{{ product.name }}</a>
+                <p class="cart-reco-price">&#8377; {{ product.selling_price|floatformat:2 }}</p>
+                <a href="{{ product.get_absolute_url }}" class="cart-reco-link">View</a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </aside>
+  </div>
+</section>
+{% endblock %}
+

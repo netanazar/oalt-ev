@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}All Bikes{% endblock %}
+{% block content %}
+<section class="shop-shell max-w-[1500px] mx-auto px-4 py-8">
+  <div class="shop-layout">
+    <aside class="shop-filter">
+      <h2>Advanced Filters</h2>
+      <form method="get" class="shop-filter-form">
+        {% if search_query %}
+          <input type="hidden" name="q" value="{{ search_query }}">
+        {% endif %}
+        <label>Category
+          <select name="category">
+            <option value="">All Categories</option>
+            {% for parent in category_tree %}
+              <option value="{{ parent.id }}" {% if selected_category == parent.id|stringformat:"s" %}selected{% endif %}>{{ parent.name }}</option>
+              {% for child in parent.children.all %}
+                <option value="{{ child.id }}" {% if selected_category == child.id|stringformat:"s" %}selected{% endif %}>↳ {{ child.name }}</option>
+              {% endfor %}
+            {% endfor %}
+          </select>
+        </label>
+        <label>Sort By
+          <select name="sort">
+            <option value="latest" {% if selected_sort == "latest" %}selected{% endif %}>Latest</option>
+            <option value="price_low_high" {% if selected_sort == "price_low_high" %}selected{% endif %}>Price Low To High</option>
+            <option value="price_high_low" {% if selected_sort == "price_high_low" %}selected{% endif %}>Price High To Low</option>
+            <option value="range_high_low" {% if selected_sort == "range_high_low" %}selected{% endif %}>Range High To Low</option>
+            <option value="battery_high_low" {% if selected_sort == "battery_high_low" %}selected{% endif %}>Battery High To Low</option>
+            <option value="name_az" {% if selected_sort == "name_az" %}selected{% endif %}>Name A-Z</option>
+          </select>
+        </label>
+        <div class="shop-filter-grid">
+          <label>Min Price (INR)
+            <input type="number" name="price__gte" value="{{ request.GET.price__gte|default:summary.min_price }}">
+          </label>
+          <label>Max Price (INR)
+            <input type="number" name="price__lte" value="{{ request.GET.price__lte|default:summary.max_price }}">
+          </label>
+          <label>Battery Min (kWh)
+            <input type="number" step="0.1" name="battery__gte" value="{{ request.GET.battery__gte|default:summary.min_battery }}">
+          </label>
+          <label>Battery Max (kWh)
+            <input type="number" step="0.1" name="battery__lte" value="{{ request.GET.battery__lte|default:summary.max_battery }}">
+          </label>
+          <label>Range Min (km)
+            <input type="number" name="range__gte" value="{{ request.GET.range__gte|default:summary.min_range }}">
+          </label>
+          <label>Range Max (km)
+            <input type="number" name="range__lte" value="{{ request.GET.range__lte|default:summary.max_range }}">
+          </label>
+        </div>
+        <div class="shop-filter-checks">
+          <label><input type="checkbox" name="discount" value="1" {% if selected_discount %}checked{% endif %}> Sale Products Only</label>
+          <label><input type="checkbox" name="in_stock" value="1" {% if selected_in_stock %}checked{% endif %}> In Stock Only</label>
+          <label><input type="checkbox" name="featured" value="1" {% if selected_featured %}checked{% endif %}> Featured Only</label>
+        </div>
+        <div class="shop-filter-actions">
+          <button type="submit">Apply Filters</button>
+          <a href="{% url 'products:product_list' %}">Reset</a>
+        </div>
+      </form>
+
+      {% if recent_viewed_products %}
+        <section class="shop-recent-viewed shop-recent-viewed--aside">
+          <h2>Recently Viewed</h2>
+          <div class="shop-recent-grid">
+            {% for item in recent_viewed_products %}
+              {% include "products/partials/product_card.html" with product=item card_class="product-card shop-recent-card" show_range_title=False show_variant_dots=False show_emi=False subtitle_mode="compact" %}
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+    </aside>
+
+    <div class="shop-main">
+      <div class="shop-head">
+        <h1>All Bikes</h1>
+        <p>Explore Oalt EV range with premium specs, offers, and quick comparison options.</p>
+        {% if search_query %}
+          <p class="shop-head-query">Showing results for: <strong>{{ search_query }}</strong></p>
+        {% endif %}
+      </div>
+
+      <div class="shop-products-grid">
+        {% for product in products %}
+          {% include "products/partials/product_card.html" with product=product card_class="product-card shop-product-card" show_range_title=False show_variant_dots=False show_emi=False subtitle_mode="shop" %}
+        {% empty %}
+          <div class="shop-empty">
+            <h2>No Bikes Found</h2>
+            <p>No product matched your selected filters. Try broadening your criteria.</p>
+            <a href="{% url 'products:product_list' %}">View All Bikes</a>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="shop-pagination">
+        {% if page_obj.has_previous %}<a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

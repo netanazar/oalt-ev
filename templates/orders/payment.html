@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Pay Securely{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-16">
+  <div class="bg-white p-8 rounded-2xl text-center">
+    <h1 class="text-2xl font-semibold">Complete Payment</h1>
+    <p class="mt-2">Order {{ order.order_number }} | Amount: ? {{ order.total_amount }}</p>
+    <button id="rzp-button" class="mt-6 bg-slate-900 text-white px-6 py-3 rounded-xl">Pay with Razorpay</button>
+  </div>
+</section>
+
+<form id="payment-verify-form" action="{% url 'payments:verify_payment' %}" method="post" hidden>
+  {% csrf_token %}
+  <input type="hidden" name="order_id" value="{{ order.id }}">
+  <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+  <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+  <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+</form>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const options = {
+    key: "{{ razorpay_key_id }}",
+    amount: "{{ razorpay_order.amount }}",
+    currency: "{{ razorpay_order.currency }}",
+    name: "Oalt EV Technology Pvt. Ltd.",
+    order_id: "{{ razorpay_order.id }}",
+    handler: function (response) {
+      document.getElementById("razorpay_order_id").value = response.razorpay_order_id;
+      document.getElementById("razorpay_payment_id").value = response.razorpay_payment_id;
+      document.getElementById("razorpay_signature").value = response.razorpay_signature;
+      document.getElementById("payment-verify-form").submit();
+    },
+  };
+  document.getElementById("rzp-button").onclick = function () {
+    new Razorpay(options).open();
+  };
+</script>
+{% endblock %}
+

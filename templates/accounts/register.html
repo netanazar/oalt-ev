@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-shell auth-shell--register">
+    <aside class="auth-promo">
+      <p class="auth-promo__eyebrow">Join Oalt EV</p>
+      <h2>Create Your Account And Unlock Faster EV Shopping.</h2>
+      <p>Save delivery details, compare bikes, track orders live, and access exclusive launch offers.</p>
+      <div class="auth-promo__chips">
+        <span><i class="fa-solid fa-user-check"></i> Quick Signup</span>
+        <span><i class="fa-solid fa-bag-shopping"></i> Smart Orders</span>
+      </div>
+      <div class="auth-promo__illustration" aria-hidden="true">
+        <div class="auth-blob auth-blob--one"></div>
+        <div class="auth-blob auth-blob--two"></div>
+        <div class="auth-bike-icon"><i class="fa-solid fa-bicycle"></i></div>
+      </div>
+    </aside>
+
+    <div class="auth-form-pane">
+      <div class="auth-brand">
+        <img src="/media/logo.png" alt="Oalt EV logo" onerror="this.style.display='none'">
+        <span>Oalt EV</span>
+      </div>
+      <h1>Create Account</h1>
+      <p class="auth-subtitle">Get started with your Oalt EV profile</p>
+
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="auth-alert">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="auth-two-col">
+          <div class="auth-field-wrap">
+            <label for="{{ form.first_name.id_for_label }}">First Name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<p class="auth-error">{{ form.first_name.errors|striptags }}</p>{% endif %}
+          </div>
+          <div class="auth-field-wrap">
+            <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<p class="auth-error">{{ form.last_name.errors|striptags }}</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="auth-field-wrap">
+          <label for="{{ form.username.id_for_label }}">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<p class="auth-error">{{ form.username.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="auth-two-col">
+          <div class="auth-field-wrap">
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<p class="auth-error">{{ form.email.errors|striptags }}</p>{% endif %}
+          </div>
+          <div class="auth-field-wrap">
+            <label for="{{ form.phone.id_for_label }}">Phone</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<p class="auth-error">{{ form.phone.errors|striptags }}</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="auth-two-col">
+          <div class="auth-field-wrap">
+            <label for="{{ form.password1.id_for_label }}">Password</label>
+            <div class="auth-password-wrap">
+              {{ form.password1 }}
+              <button type="button" class="auth-eye-btn" data-auth-toggle-password data-target="{{ form.password1.id_for_label }}" aria-label="Show password">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            {% if form.password1.errors %}<p class="auth-error">{{ form.password1.errors|striptags }}</p>{% endif %}
+          </div>
+          <div class="auth-field-wrap">
+            <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+            <div class="auth-password-wrap">
+              {{ form.password2 }}
+              <button type="button" class="auth-eye-btn" data-auth-toggle-password data-target="{{ form.password2.id_for_label }}" aria-label="Show password">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            {% if form.password2.errors %}<p class="auth-error">{{ form.password2.errors|striptags }}</p>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit-btn">Create Account</button>
+      </form>
+
+      {% if social_login_enabled %}
+        <div class="auth-divider"><span>Or signup with</span></div>
+        <div class="auth-social-grid">
+          {% if social_google_url %}
+            <a href="{{ social_google_url }}" class="auth-social-btn">
+              <i class="fa-brands fa-google"></i> Google
+            </a>
+          {% endif %}
+          {% if social_facebook_url %}
+            <a href="{{ social_facebook_url }}" class="auth-social-btn">
+              <i class="fa-brands fa-facebook-f"></i> Facebook
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <p class="auth-switch-text">
+        Already have an account?
+        <a href="{% url 'accounts:login' %}">Login</a>
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

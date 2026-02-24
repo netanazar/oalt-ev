@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% block title %}Oalt EV | Electric Cycles & EV Bikes in India{% endblock %}
+{% block meta_description %}Shop premium Oalt EV electric cycles and e-bikes. Explore best sellers, smart features, ride modes, and expert EV buying guides.{% endblock %}
+{% block extra_head %}
+{% endblock %}
+{% block content %}
+<section class="hero-stage-wrap">
+  <div class="hero-slider" id="hero-slider" aria-label="Oalt Hero Slider">
+    <div class="hero-stage">
+      <div class="hero-slide is-active" data-slide style="background-image:url('/media/Slider%20(1).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(2).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(3).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(4).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(5).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(6).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(7).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(8).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(9).png');"></div>
+      <div class="hero-slide" data-slide style="background-image:url('/media/Slider%20(10).png');"></div>
+    </div>
+  </div>
+</section>
+
+<section class="home-commerce-strip">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="home-commerce-grid">
+      <article class="home-commerce-card">
+        <h3><i class="fa-solid fa-rocket"></i> New Launches</h3>
+        <p>Latest OALT EV models with fresh design and better performance.</p>
+        <a href="{% url 'products:product_list' %}">Shop New Arrivals <i class="fa-solid fa-arrow-right"></i></a>
+      </article>
+      <article class="home-commerce-card">
+        <h3><i class="fa-solid fa-tag"></i> Best Deals</h3>
+        <p>Grab limited-time pricing and festival offers on top bikes.</p>
+        <a href="{% url 'products:product_list' %}">View Deals <i class="fa-solid fa-arrow-right"></i></a>
+      </article>
+      <article class="home-commerce-card">
+        <h3><i class="fa-solid fa-calendar-check"></i> Book Test Ride</h3>
+        <p>Experience comfort, pickup, and stability before you buy.</p>
+        <a href="https://wa.me/{{ whatsapp_phone }}?text=I%20want%20to%20book%20a%20test%20ride">Book Now <i class="fa-solid fa-arrow-right"></i></a>
+      </article>
+      <article class="home-commerce-card">
+        <h3><i class="fa-solid fa-wallet"></i> EMI & Finance</h3>
+        <p>Flexible EMI options designed for students and professionals.</p>
+        <a href="{% url 'products:product_list' %}">Check EMI Plans <i class="fa-solid fa-arrow-right"></i></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="headline-band">
+  <div class="max-w-7xl mx-auto px-4">
+    <h2>{{ home_sections.headline.heading|default:"OALT EV Electric Cycles – Premium E-Bikes for Every Rider | Shop Online in India" }}</h2>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 py-8">
+  <div class="grid md:grid-cols-4 gap-4">
+    <article class="bg-white border border-slate-200 rounded-xl p-5"><h3 class="font-semibold text-lg"><i class="fa-solid fa-truck-fast text-red-600"></i> Fast Delivery</h3><p class="text-slate-600 mt-2">Pan-India fulfillment with proactive dispatch updates.</p></article>
+    <article class="bg-white border border-slate-200 rounded-xl p-5"><h3 class="font-semibold text-lg"><i class="fa-solid fa-shield-halved text-red-600"></i> Secure Checkout</h3><p class="text-slate-600 mt-2">Encrypted payment flow with trusted gateway integrations.</p></article>
+    <article class="bg-white border border-slate-200 rounded-xl p-5"><h3 class="font-semibold text-lg"><i class="fa-solid fa-wallet text-red-600"></i> Easy EMI</h3><p class="text-slate-600 mt-2">Flexible ownership plans designed for modern ride? </p></article>
+    <article class="bg-white border border-slate-200 rounded-xl p-5"><h3 class="font-semibold text-lg"><i class="fa-solid fa-headset text-red-600"></i> EV Support</h3><p class="text-slate-600 mt-2">Assisted onboarding and after-sales support by specialists.</p></article>
+  </div>
+</section>
+
+<section class="best-seller-wrap py-14" aria-labelledby="best-sellers-heading">
+  <div class="max-w-7xl mx-auto px-4">
+    <h2 id="best-sellers-heading" class="best-seller-title"><i class="fa-solid fa-fire"></i> Best Sellers</h2>
+  </div>
+  {% if featured_products %}
+    <div class="product-marquee">
+      <div class="product-track">
+        {% for product in featured_products %}
+          {% include "products/partials/product_card.html" with product=product card_class="product-card home-product-card" show_range_title=True show_variant_dots=True show_emi=True subtitle_mode="home" %}
+        {% endfor %}
+        {% for product in featured_products %}
+          {% include "products/partials/product_card.html" with product=product card_class="product-card home-product-card" show_range_title=True show_variant_dots=True show_emi=True subtitle_mode="home" %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+<section class="full-banner" style="background-image:url('/media/Oalt_Force_350_full_baner_Section.png');">
+  <div class="full-banner-content">
+    <h2>{{ home_sections.banner.heading|default:"Experience the Future of Riding with OALT E-Bike" }}</h2>
+    <p>{{ home_sections.banner.subheading|default:"Premium electric performance designed for modern city life." }}</p>
+  </div>
+</section>
+
+<section class="features-grid-wrap" aria-labelledby="smart-features-heading">
+  <div class="max-w-7xl mx-auto px-4 py-14">
+    <h2 id="smart-features-heading" class="section-blue-title">{{ home_sections.smart_features.heading|default:"Smart Features, Smart Rides" }}</h2>
+    <div class="features-grid">
+      {% if feature_cards %}
+        {% for card in feature_cards %}
+          <article class="{% if card.card_type == 'large' %}feature-card-lg{% else %}feature-card-sm{% endif %}" style="background-image:url('{{ card.image.url }}');">
+            <div>
+              <h3>{{ card.title }}</h3>
+              <p>{{ card.description }}</p>
+            </div>
+          </article>
+        {% endfor %}
+      {% else %}
+        <article class="feature-card-lg feature-card-lg--video">
+          <video autoplay muted loop playsinline preload="metadata">
+            <source src="/media/Smart_Features_Smart_Rides.mp4" type="video/mp4">
+          </video>
+          <div>
+            <h3>Charge Anywhere</h3>
+            <p>Like your phone, plug it in and get back to riding without the range anxiety.</p>
+            <a href="{% url 'blog:detail' 'complete-e-cycle-battery-guide-oalt-ev' %}" class="feature-know-more-btn">Know More</a>
+          </div>
+        </article>
+        <article class="feature-card-sm" style="background-image:url('/media/Sweat_By_Choice.png');"><div><h3>Sweat By Choice</h3><p>Pedal or accelerate. You stay in control with multi-ride options.</p></div></article>
+        <article class="feature-card-sm" style="background-image:url('/media/Slider%20(7).png');"><div><h3>Lifetime Warranty*</h3><p>Confidence backed by quality engineering and reliable support.</p></div></article>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="modes-wrap" aria-labelledby="modes-heading">
+  <div class="max-w-7xl mx-auto px-4 py-14">
+    <h2 id="modes-heading" class="section-blue-title">{{ home_sections.modes.heading|default:"A Mode For Every Mood" }}</h2>
+    <div class="modes-grid">
+      {% if mode_cards %}
+        {% for mode in mode_cards %}
+          <article class="mode-card">
+            <img src="{{ mode.image.url }}" alt="{{ mode.title }}" loading="lazy" decoding="async">
+            <h3>{{ mode.title }}</h3>
+            <p>{{ mode.description }}</p>
+          </article>
+        {% endfor %}
+      {% else %}
+        <article class="mode-card"><img src="/media/Slider%20(8).png" alt="Accelerate mode" loading="lazy" decoding="async"><h3>Accelerate</h3><p>Twist the throttle and zoom without pedalling.</p></article>
+        <article class="mode-card"><img src="/media/Slider%20(9).png" alt="Pedal assist mode" loading="lazy" decoding="async"><h3>Pedal Assist</h3><p>Your pedal power meets electric magic.</p></article>
+        <article class="mode-card"><img src="/media/Slider%20(10).png" alt="Mechanical mode" loading="lazy" decoding="async"><h3>Mechanical</h3><p>Go old-school whenever you want manual riding feel.</p></article>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="cred-strip" aria-labelledby="cred-heading">
+  <div class="max-w-7xl mx-auto px-4 py-14">
+    <h2 id="cred-heading">{{ home_sections.credibility.heading|default:"Most Promising EV Of The Year" }}</h2>
+    <p>{{ home_sections.credibility.subheading|default:"That is what riders, experts, and industry leaders say." }}</p>
+    {% if testimonials %}
+      <div class="cred-marquee">
+        <div class="cred-track">
+          {% for t in testimonials %}
+            <article class="cred-card">
+              <div class="cred-avatar">
+                {% if t.image %}
+                  <img src="{{ t.image.url }}" alt="{{ t.name }}" loading="lazy" decoding="async">
+                {% else %}
+                  <i class="fa-solid fa-user"></i>
+                {% endif %}
+              </div>
+              <h3>{{ t.name }}</h3>
+              <p>{{ t.designation|default:"Oalt EV Rider" }}</p>
+            </article>
+          {% endfor %}
+          {% for t in testimonials %}
+            <article class="cred-card" aria-hidden="true">
+              <div class="cred-avatar">
+                {% if t.image %}
+                  <img src="{{ t.image.url }}" alt="{{ t.name }}" loading="lazy" decoding="async">
+                {% else %}
+                  <i class="fa-solid fa-user"></i>
+                {% endif %}
+              </div>
+              <h3>{{ t.name }}</h3>
+              <p>{{ t.designation|default:"Oalt EV Rider" }}</p>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="cred-cards">
+        <article class="cred-card">
+          <div class="cred-avatar"><i class="fa-solid fa-user"></i></div>
+          <h3>Oalt Community</h3>
+          <p>Trusted by EV riders across India.</p>
+        </article>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="why-wrap">
+  <div class="max-w-7xl mx-auto px-4 py-14">
+    <h2 class="section-blue-title why-heading">{{ home_sections.why.heading|default:"Why Electric Cycles?" }}</h2>
+
+    <div class="why-prose">
+      <p class="why-intro">
+        An electric bike, or e-cycle, combines motor-integrated, throttle-enabled support with everyday practicality.
+        For modern city commuting, it delivers cleaner mobility, better comfort, and meaningful cost savings.
+      </p>
+
+      <ul class="why-list">
+        <li>
+          <strong>Eco-Friendly Travel</strong>
+          With zero direct emissions, e-cycles are a greener alternative to fuel vehicles and help reduce urban air pollution.
+        </li>
+        <li>
+          <strong>Health and Fitness</strong>
+          Ride with assist when needed and pedal when you want to stay active. This balance supports stamina, joint comfort,
+          and cardiovascular health without excessive strain.
+        </li>
+        <li>
+          <strong>Economical Ownership</strong>
+          Charging cost is far lower than fuel, regular maintenance is simpler, and daily commuting becomes more affordable over time.
+        </li>
+        <li>
+          <strong>Convenient and Flexible</strong>
+          Faster city movement, less commute fatigue, and dependable performance across both roads and light off-road trails.
+        </li>
+        <li>
+          <strong>Inclusive and Accessible</strong>
+          Designed for riders across age groups and riding levels, including routes where incline or terrain needs motor support.
+        </li>
+      </ul>
+
+      <div id="why-more-content" class="why-more" hidden>
+        <p class="why-intro">
+          Oalt EV Technology Pvt. Ltd. is building smart, dependable electric mobility for commuters and performance-focused riders.
+          Our platform combines premium design, practical engineering, and customer-first ownership support.
+        </p>
+
+        <h3>Why Choose Oalt EV Electric Cycles</h3>
+        <ul class="why-list">
+          <li><strong>Intelligent Digital Display:</strong> Live speed, battery, ride distance, and assist-level visibility.</li>
+          <li><strong>Long-Range Removable Battery:</strong> Built for daily travel and weekend rides with easy charging workflow.</li>
+          <li><strong>250W Motor + Multi-Level Pedal Assist:</strong> Smooth acceleration and stable control in mixed city conditions.</li>
+          <li><strong>Integrated Safety Lighting:</strong> Front/rear lighting support for day and night visibility.</li>
+          <li><strong>Durable Frame Architecture:</strong> Lightweight strength tuned for Indian roads and riding conditions.</li>
+          <li><strong>Suspension Comfort:</strong> Better shock handling and rider confidence on uneven patches.</li>
+        </ul>
+
+        <h3>Types of Electric Cycles</h3>
+        <ul class="why-list">
+          <li><strong>Mountain E-Cycles:</strong> Rugged builds and suspension for trails and adventure riding.</li>
+          <li><strong>Foldable E-Cycles:</strong> Compact form for urban users with limited storage or multi-modal commute.</li>
+          <li><strong>Commuter E-Cycles:</strong> Efficient city-focused geometry for daily office and local travel.</li>
+          <li><strong>Fat Tyre E-Cycles:</strong> Improved grip and stability on sand, mud, and mixed surfaces.</li>
+        </ul>
+
+        <h3>Electric Cycle Buying Guide</h3>
+        <ul class="why-list">
+          <li><strong>Purpose:</strong> Choose by use-case: city commute, trails, leisure, or mixed riding.</li>
+          <li><strong>Motor:</strong> 250W class is ideal for most Indian city + mild incline requirements.</li>
+          <li><strong>Battery:</strong> Match battery range to your daily travel pattern and charging routine.</li>
+          <li><strong>Frame and Comfort:</strong> Select frame weight and suspension by your terrain profile.</li>
+          <li><strong>Budget Priorities:</strong> Invest first in motor reliability, battery quality, and service support.</li>
+        </ul>
+
+        <h3>Beginner Tips for E-Cycle Riders</h3>
+        <p class="why-intro">
+          Start with lower assist modes, practice throttle and braking balance, and build confidence gradually.
+          Always use protective gear and ride with visible lighting in low-light conditions.
+        </p>
+        <div class="why-faq" id="why-faq">
+          <h3 class="why-faq-title">FAQs</h3>
+
+          <div class="why-faq-list">
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>1. What is an E-cycle?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              An E-cycle is a bicycle with an electric motor and battery assist. Oalt EV e-cycles can be ridden with pedal assist, throttle, or manual pedaling.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>2. How do electric cycles work?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              The motor supports your pedaling through assist levels and throttle mode. Power comes from a rechargeable battery managed by onboard control electronics.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>3. What is the average speed of electric cycles?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              Typical urban E-cycles are tuned for safe city speeds. Oalt EV models are optimized for stable daily commuting and smooth acceleration.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>4. What is the average range of e-cycles?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              Range varies by riding mode, terrain, rider load, and battery size. In practical conditions, E-cycles generally deliver approx. 40-100 km per charge.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>5. How much time does it take to charge an e-bike?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              Most batteries take around 4-6 hours for a full charge, depending on charger rating and battery capacity.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>6. Are electric cycles waterproof?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              Oalt EV electrical components are designed for real-world weather exposure, but avoid deep water submersion and always follow maintenance guidelines.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>7. How safe are electric cycles?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              With proper riding gear, controlled speed, quality brakes, and regular service, E-cycles are a safe and reliable mobility option.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>8. Are there any electric cycle models available for kids?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              Model availability can vary by frame size and local stock. Contact Oalt EV support to get age-appropriate recommendations.
+            </div>
+          </article>
+
+          <article class="why-faq-item">
+            <button type="button" class="why-faq-q" aria-expanded="false">
+              <span>9. Is an electric cycle legal in India?</span>
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <div class="why-faq-a" hidden>
+              Yes, low-speed electric cycles that meet current Indian compliance norms are legal. Always verify model-specific compliance before purchase.
+            </div>
+          </article>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" id="why-toggle-btn" class="why-more-btn">See More</button>
+    </div>
+  </div>
+</section>
+
+<section class="knowledge-wrap" aria-labelledby="knowledge-heading">
+  <div class="max-w-7xl mx-auto px-4 py-14">
+    <h2 id="knowledge-heading" class="section-blue-title">{{ home_sections.knowledge.heading|default:"Oalt EV Knowledge Hub" }}</h2>
+    <div class="knowledge-grid">
+      {% for post in latest_posts %}
+        <article class="knowledge-card">
+          <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy" decoding="async">
+          <div class="knowledge-body">
+            <p class="knowledge-date">{{ post.published_at|date:"l, j F Y" }}</p>
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.excerpt }}</p>
+            <a href="{% url 'blog:detail' post.slug %}"><i class="fa-solid fa-book-open-reader"></i> Read More</a>
+          </div>
+        </article>
+      {% empty %}
+        <article class="knowledge-card">
+          <img src="/media/Slider%20(8).png" alt="What is an electric cycle by Oalt EV" loading="lazy" decoding="async">
+          <div class="knowledge-body">
+            <p class="knowledge-date">Oalt EV Editorial</p>
+            <h3>What Is an Electric Cycle? Oalt EV Starter Guide</h3>
+            <p>Understand motor assist, battery, range, and why electric cycles are ideal for daily city mobility.</p>
+            <a href="{% url 'blog:list' %}"><i class="fa-solid fa-book-open-reader"></i> Read More</a>
+          </div>
+        </article>
+        <article class="knowledge-card">
+          <img src="/media/Slider%20(9).png" alt="Oalt EV battery and range guide" loading="lazy" decoding="async">
+          <div class="knowledge-body">
+            <p class="knowledge-date">Oalt EV Editorial</p>
+            <h3>Battery, Range, and Charging: Practical Buying Checklist</h3>
+            <p>Learn how to compare battery specs, estimate real range, and choose the right cycle for your routine.</p>
+            <a href="{% url 'blog:list' %}"><i class="fa-solid fa-book-open-reader"></i> Read More</a>
+          </div>
+        </article>
+        <article class="knowledge-card">
+          <img src="/media/Slider%20(10).png" alt="Oalt EV service and maintenance tips" loading="lazy" decoding="async">
+          <div class="knowledge-body">
+            <p class="knowledge-date">Oalt EV Editorial</p>
+            <h3>Oalt EV Ownership: Service, Safety, and Care Tips</h3>
+            <p>Best practices for maintenance, charging habits, and safe riding to keep your e-cycle reliable for years.</p>
+            <a href="{% url 'blog:list' %}"><i class="fa-solid fa-book-open-reader"></i> Read More</a>
+          </div>
+        </article>
+        <article class="knowledge-card">
+          <img src="/media/Slider%20(6).png" alt="How to choose the right Oalt EV model" loading="lazy" decoding="async">
+          <div class="knowledge-body">
+            <p class="knowledge-date">Oalt EV Editorial</p>
+            <h3>Which Oalt EV Model Is Right for You?</h3>
+            <p>Compare commuter, performance, and long-range models based on your route, budget, and riding style.</p>
+            <a href="{% url 'blog:list' %}"><i class="fa-solid fa-book-open-reader"></i> Visit Blog</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="newsletter-band">
+  <div class="max-w-7xl mx-auto px-4 pt-10 pb-0">
+    <div class="newsletter-card">
+      <div class="newsletter-copy">
+        <h2>{{ home_sections.newsletter.heading|default:"Get EV Offers, Launch Updates, and Expert Tips" }}</h2>
+        <p>{{ home_sections.newsletter.subheading|default:"Subscribe to Oalt EV newsletter and stay ahead in electric mobility." }}</p>
+        <ul class="newsletter-trust-points">
+          <li><i class="fa-solid fa-shield-halved"></i> No Spam</li>
+          <li><i class="fa-solid fa-calendar-week"></i> Weekly Updates</li>
+          <li><i class="fa-solid fa-toggle-on"></i> Unsubscribe Anytime</li>
+        </ul>
+      </div>
+      <form action="{% url 'core:newsletter_subscribe' %}" method="post" class="newsletter-form">
+        {% csrf_token %}
+        {{ newsletter_form.email }}
+        <button><i class="fa-solid fa-paper-plane"></i> Subscribe</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    const toggleBtn = document.getElementById("why-toggle-btn");
+    const moreContent = document.getElementById("why-more-content");
+    if (!toggleBtn || !moreContent) return;
+
+    toggleBtn.addEventListener("click", function () {
+      const isHidden = moreContent.hasAttribute("hidden");
+      if (isHidden) {
+        moreContent.removeAttribute("hidden");
+        toggleBtn.textContent = "Show Less";
+      } else {
+        moreContent.setAttribute("hidden", "hidden");
+        toggleBtn.textContent = "See More";
+      }
+    });
+
+    const faqButtons = document.querySelectorAll(".why-faq-q");
+    faqButtons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const panel = btn.nextElementSibling;
+        if (!panel) return;
+
+        const expanded = btn.getAttribute("aria-expanded") === "true";
+        faqButtons.forEach(function (otherBtn) {
+          const otherPanel = otherBtn.nextElementSibling;
+          if (!otherPanel) return;
+          otherBtn.setAttribute("aria-expanded", "false");
+          otherPanel.hidden = true;
+        });
+
+        if (!expanded) {
+          btn.setAttribute("aria-expanded", "true");
+          panel.hidden = false;
+        }
+      });
+    });
+  })();
+</script>
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Oalt EV Technology Pvt. Ltd.",
+  "url": "{{ site_base_url }}",
+  "logo": "{{ site_base_url }}/media/logo.png",
+  "sameAs": []
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Oalt EV",
+  "url": "{{ site_base_url }}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ site_base_url }}/shop/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{% endblock %}
+
+
