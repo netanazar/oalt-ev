@@ -7,8 +7,10 @@ from .views import (
     dashboard,
     dashboard_export_report,
     dashboard_manage,
+    detect_location,
     legal_page,
     newsletter_subscribe,
+    set_manual_location,
     verify_document,
 )
 
@@ -28,6 +30,8 @@ urlpatterns = [
     path("faq/", legal_page, {"slug": "faq"}, name="faq"),
     path("cookies-policy/", legal_page, {"slug": "cookies-policy"}, name="cookies_policy"),
     path("verify-document/", verify_document, name="verify_document"),
+    path("location/detect/", detect_location, name="detect_location"),
+    path("location/manual/", set_manual_location, name="set_manual_location"),
     path("newsletter/subscribe/", newsletter_subscribe, name="newsletter_subscribe"),
     path("dashboard/", dashboard, name="dashboard"),
     path("dashboard/manage/<str:section>/", dashboard_manage, name="dashboard_manage"),

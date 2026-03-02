@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils import timezone
 
 from apps.products.models import Product, ProductVariant
@@ -46,35 +47,56 @@ class Cart(models.Model):
     def _money(value: Decimal) -> Decimal:
         return value.quantize(Decimal("0.01"))
 
+    @cached_property
+    def _line_items(self):
+        if hasattr(self, "_prefetched_objects_cache") and "items" in self._prefetched_objects_cache:
+            items = self._prefetched_objects_cache["items"]
+            return list(items)
+        return list(self.items.select_related("product", "variant"))
+
+    @cached_property
+    def _calculated_totals(self):
+        gross = sum((item.line_total for item in self._line_items), Decimal("0.00"))
+        gross = self._money(gross)
+        if gross <= 0:
+            subtotal = Decimal("0.00")
+        else:
+            subtotal = self._money(gross / self.GST_DIVISOR)
+
+        discount = Decimal("0.00")
+        if self.coupon and self.coupon.is_valid():
+            discount = self._money((subtotal * Decimal(self.coupon.discount_percent)) / Decimal("100"))
+
+        taxable = max(subtotal - discount, Decimal("0.00"))
+        gst = self._money(taxable * self.GST_RATE)
+        total = self._money(taxable + gst)
+        return {
+            "items_total": gross,
+            "subtotal": subtotal,
+            "discount": discount,
+            "gst": gst,
+            "grand_total": total,
+        }
+
     @property
     def items_total(self) -> Decimal:
-        # Item prices are stored and shown as GST-inclusive totals.
-        gross = sum((item.line_total for item in self.items.select_related("product", "variant")), Decimal("0.00"))
-        return self._money(gross)
+        return self._calculated_totals["items_total"]
 
     @property
     def subtotal(self) -> Decimal:
-        # Subtotal in order summary should be GST-exclusive.
-        if self.items_total <= 0:
-            return Decimal("0.00")
-        return self._money(self.items_total / self.GST_DIVISOR)
+        return self._calculated_totals["subtotal"]
 
     @property
     def discount(self) -> Decimal:
-        if self.coupon and self.coupon.is_valid():
-            value = (self.subtotal * Decimal(self.coupon.discount_percent)) / Decimal("100")
-            return self._money(value)
-        return Decimal("0.00")
+        return self._calculated_totals["discount"]
 
     @property
     def gst(self) -> Decimal:
-        taxable = max(self.subtotal - self.discount, Decimal("0.00"))
-        return self._money(taxable * self.GST_RATE)
+        return self._calculated_totals["gst"]
 
     @property
     def grand_total(self) -> Decimal:
-        taxable = max(self.subtotal - self.discount, Decimal("0.00"))
-        return self._money(taxable + self.gst)
+        return self._calculated_totals["grand_total"]
 
 
 class CartItem(models.Model):

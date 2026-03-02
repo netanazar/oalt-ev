@@ -18,11 +18,13 @@ from .services import create_order_from_cart
 @login_required
 def checkout(request):
     cart = get_or_create_cart(request)
+    cart_items = list(cart.items.select_related("product", "variant"))
+    cart._prefetched_objects_cache = {"items": cart_items}
     gateway_ready = is_razorpay_available()
     eta_from = timezone.localdate() + timedelta(days=2)
     eta_to = timezone.localdate() + timedelta(days=5)
     payment_method_preview = "Choose between Online Payment and Cash on Delivery."
-    if not cart.items.exists():
+    if not cart_items:
         messages.error(request, "Your cart is empty.")
         return redirect("cart:cart_detail")
 
@@ -72,6 +74,7 @@ def checkout(request):
         "orders/checkout.html",
         {
             "cart": cart,
+            "cart_items": cart_items,
             "form": form,
             "gateway_ready": gateway_ready,
             "eta_from": eta_from,

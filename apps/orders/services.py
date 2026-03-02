@@ -23,6 +23,9 @@ def create_order_from_cart(*, user, cart: Cart, address_data: dict, payment_meth
         coupon_code=cart.coupon.code if cart.coupon else "",
     )
     ShippingAddress.objects.create(order=order, **address_data)
-    for item in cart.items.select_related("product", "variant", "variant__product"):
+    line_items = getattr(cart, "_line_items", None)
+    if line_items is None:
+        line_items = list(cart.items.select_related("product", "variant", "variant__product"))
+    for item in line_items:
         OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity, price=item.unit_price)
     return order

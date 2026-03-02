@@ -24,6 +24,7 @@ class Testimonial(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [models.Index(fields=["is_active", "created_at"])]
 
     def __str__(self) -> str:
         return self.name
@@ -40,6 +41,7 @@ class SiteContent(models.Model):
     class Meta:
         verbose_name = "Site Content"
         verbose_name_plural = "Site Contents"
+        indexes = [models.Index(fields=["is_active", "key"])]
 
     def __str__(self) -> str:
         return self.key
@@ -110,6 +112,7 @@ class HomeSectionConfig(models.Model):
 
     class Meta:
         ordering = ["key"]
+        indexes = [models.Index(fields=["is_active", "key"])]
 
     def __str__(self) -> str:
         return self.key

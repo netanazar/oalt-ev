@@ -4,7 +4,7 @@
 {% block content %}
 <article class="max-w-5xl mx-auto px-4 py-12">
   <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-    <img src="{{ post.cover_image.url }}" class="w-full h-[420px] object-cover" alt="{{ post.title }}">
+    <img src="{{ post.cover_image.url }}" class="w-full h-[420px] object-cover" alt="{{ post.title }}" decoding="async" fetchpriority="high">
     <div class="p-7 md:p-10">
       <p class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white" style="background:linear-gradient(120deg,#C02222,#000000);">Tips & Tricks</p>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-4 leading-tight">{{ post.title }}</h1>

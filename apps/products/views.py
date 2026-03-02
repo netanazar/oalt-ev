@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .forms import ReviewForm
-from .models import Category, EmiLead, Product
+from .models import Category, EmiLead, Product, ProductImage, ProductVariant, Review
 
 
 def product_list(request):
@@ -25,7 +25,22 @@ def product_list(request):
         .prefetch_related(Prefetch("children", queryset=Category.objects.filter(is_active=True).order_by("name")))
         .order_by("name")
     )
-    base_qs = Product.objects.filter(is_active=True).select_related("category")
+    base_qs = Product.objects.filter(is_active=True).select_related("category").only(
+        "id",
+        "category_id",
+        "category__name",
+        "name",
+        "slug",
+        "short_description",
+        "price",
+        "discount_price",
+        "battery_capacity_kwh",
+        "range_per_charge_km",
+        "stock",
+        "main_image",
+        "created_at",
+        "is_featured",
+    )
     products = base_qs
     query = request.GET.get("q", "").strip()
     category_id = request.GET.get("category", "").strip()
@@ -93,7 +108,18 @@ def product_list(request):
     )
 
     recent_ids = request.session.get("recent_viewed_products", [])
-    recent_lookup = Product.objects.filter(is_active=True, pk__in=recent_ids).select_related("category")
+    recent_lookup = Product.objects.filter(is_active=True, pk__in=recent_ids).select_related("category").only(
+        "id",
+        "category_id",
+        "name",
+        "slug",
+        "short_description",
+        "price",
+        "discount_price",
+        "battery_capacity_kwh",
+        "range_per_charge_km",
+        "main_image",
+    )
     recent_map = {item.pk: item for item in recent_lookup}
     recent_viewed_products = [recent_map[pid] for pid in recent_ids if pid in recent_map][:8]
 
@@ -221,20 +247,96 @@ def compare_data_api(request):
 
 
 def product_detail(request, slug):
-    product = get_object_or_404(Product.objects.prefetch_related("images", "reviews", "variants"), slug=slug, is_active=True)
+    product_qs = (
+        Product.objects.filter(is_active=True)
+        .select_related("category")
+        .prefetch_related(
+            Prefetch(
+                "images",
+                queryset=ProductImage.objects.only("id", "product_id", "image", "alt_text", "is_primary").order_by(
+                    "-is_primary",
+                    "id",
+                ),
+            ),
+            Prefetch(
+                "variants",
+                queryset=ProductVariant.objects.filter(is_active=True).only(
+                    "id",
+                    "product_id",
+                    "color_name",
+                    "color_code",
+                    "image",
+                    "stock",
+                    "additional_price",
+                    "is_active",
+                ),
+            ),
+            Prefetch(
+                "reviews",
+                queryset=Review.objects.filter(is_approved=True).select_related("user").only(
+                    "id",
+                    "product_id",
+                    "user_id",
+                    "rating",
+                    "comment",
+                    "created_at",
+                    "is_approved",
+                    "user__username",
+                    "user__first_name",
+                    "user__last_name",
+                ),
+                to_attr="approved_review_list",
+            ),
+        )
+    )
+    product = get_object_or_404(product_qs, slug=slug)
     review_form = ReviewForm()
-    related_products = (
+    related_products = list(
         Product.objects.filter(is_active=True, category=product.category)
         .exclude(pk=product.pk)
+        .select_related("category")
+        .only(
+            "id",
+            "category_id",
+            "name",
+            "slug",
+            "short_description",
+            "price",
+            "discount_price",
+            "battery_capacity_kwh",
+            "range_per_charge_km",
+            "main_image",
+            "created_at",
+            "is_featured",
+        )
         .order_by("-is_featured", "-created_at")[:12]
     )
-    if not related_products.exists():
-        related_products = Product.objects.filter(is_active=True).exclude(pk=product.pk).order_by("-created_at")[:12]
+    if not related_products:
+        related_products = list(
+            Product.objects.filter(is_active=True)
+            .exclude(pk=product.pk)
+            .select_related("category")
+            .only(
+                "id",
+                "category_id",
+                "name",
+                "slug",
+                "short_description",
+                "price",
+                "discount_price",
+                "battery_capacity_kwh",
+                "range_per_charge_km",
+                "main_image",
+                "created_at",
+            )
+            .order_by("-created_at")[:12]
+        )
     frequently_bought = list(related_products[:2])
     bundle_total = product.selling_price + sum((item.selling_price for item in frequently_bought), Decimal("0"))
 
-    approved_reviews = product.reviews.filter(is_approved=True)
-    review_count = approved_reviews.count()
+    approved_reviews = list(getattr(product, "approved_review_list", []))
+    review_count = len(approved_reviews)
+    product_rating = round(sum(item.rating for item in approved_reviews) / review_count, 1) if review_count else 0
     about_points = [line.strip("- ").strip() for line in product.description.splitlines() if line.strip()]
     if not about_points:
         about_points = [product.short_description]
@@ -248,7 +350,7 @@ def product_detail(request, slug):
     technical_specs_left = specs[:split_index]
     technical_specs_right = specs[split_index:]
 
-    active_variants = [v for v in product.variants.all() if v.is_active]
+    active_variants = list(product.variants.all())
     requested_variant_id = request.GET.get("variant", "").strip()
     selected_variant = active_variants[0] if active_variants else None
     if requested_variant_id.isdigit():
@@ -262,6 +364,7 @@ def product_detail(request, slug):
         "related_products": related_products,
         "approved_reviews": approved_reviews,
         "review_count": review_count,
+        "product_rating": product_rating,
         "about_points": about_points,
         "overview_paragraphs": overview_paragraphs,
         "technical_specs_left": technical_specs_left,
@@ -309,7 +412,18 @@ def product_detail(request, slug):
 
     recent_ids = request.session.get("recent_viewed_products", [])
     filtered_ids = [pid for pid in recent_ids if pid != product.id]
-    recent_lookup = Product.objects.filter(is_active=True, pk__in=filtered_ids).select_related("category")
+    recent_lookup = Product.objects.filter(is_active=True, pk__in=filtered_ids).select_related("category").only(
+        "id",
+        "category_id",
+        "name",
+        "slug",
+        "short_description",
+        "price",
+        "discount_price",
+        "battery_capacity_kwh",
+        "range_per_charge_km",
+        "main_image",
+    )
     recent_map = {item.pk: item for item in recent_lookup}
     context["recent_viewed_products"] = [recent_map[pid] for pid in filtered_ids if pid in recent_map][:8]
 
@@ -413,9 +527,9 @@ def submit_emi_lead(request):
     summary_lines = [
         f"EMI Lead ID: {lead.id}",
         f"Model: {lead.model_name}",
-        f"Unit Price: ₹ {lead.unit_price}",
+        f"Unit Price: INR {lead.unit_price}",
         f"Quantity: {lead.quantity}",
-        f"Down Payment: ₹ {lead.down_payment}",
+        f"Down Payment: INR {lead.down_payment}",
         f"Interest: {lead.interest_rate}%",
         f"Selected Tenure: {lead.selected_tenure_months} months",
         f"Customer: {lead.customer_name}",
@@ -451,7 +565,7 @@ def submit_emi_lead(request):
         f"New EMI Lead%0A"
         f"ID: {lead.id}%0A"
         f"Model: {lead.model_name}%0A"
-        f"Price: ₹ {lead.unit_price}%0A"
+        f"Price: INR {lead.unit_price}%0A"
         f"Qty: {lead.quantity}%0A"
         f"Customer: {lead.customer_name}%0A"
         f"Mobile: {lead.customer_mobile}%0A"

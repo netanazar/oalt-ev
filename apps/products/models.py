@@ -72,6 +72,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=["slug"]),
             models.Index(fields=["is_active", "is_featured"]),
+            models.Index(fields=["is_active", "created_at"]),
             models.Index(fields=["price"]),
         ]
 

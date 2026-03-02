@@ -1,4 +1,4 @@
-{% load static %}
+{% load static perf_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,13 +6,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Oalt EV{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}Premium EV bikes and products by Oalt EV{% endblock %}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <meta name="robots" content="{% block meta_robots %}index,follow{% endblock %}">
+  <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+  {% if tailwind_cdn_enabled %}
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <script defer src="https://cdn.tailwindcss.com"></script>
+  {% endif %}
+  {% if font_awesome_cdn_enabled %}
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"></noscript>
+  {% endif %}
+  <style id="critical-css">{% critical_css_inline %}</style>
+  <link rel="preload" href="{% asset_path 'css/theme.css' %}" as="style">
+  <link rel="stylesheet" href="{% asset_path 'css/theme.css' %}">
   {% block extra_head %}{% endblock %}
-  <script defer src="{% static 'js/main.js' %}"></script>
+  <script defer src="{% asset_path 'js/main.js' %}"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
+  {% if is_admin_console %}
+  <header class="admin-console-header sticky top-0 z-50">
+    <div class="max-w-[1500px] mx-auto px-3 admin-console-bar">
+      <a href="{% url 'core:dashboard' %}" class="admin-console-logo">
+        <img src="/media/logo.png" alt="Oalt EV" class="h-9 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+        <span style="display:none;" class="text-lg font-semibold">Oalt EV</span>
+      </a>
+      <nav class="admin-console-nav">
+        <a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a href="{% url 'core:dashboard_manage' 'categories' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard_manage' and request.resolver_match.kwargs.section == 'categories' %}is-active{% endif %}">Categories</a>
+        <a href="{% url 'core:dashboard_manage' 'products' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard_manage' and request.resolver_match.kwargs.section == 'products' %}is-active{% endif %}">Products</a>
+        <a href="{% url 'core:dashboard_manage' 'orders' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard_manage' and request.resolver_match.kwargs.section == 'orders' %}is-active{% endif %}">Orders</a>
+        <a href="{% url 'core:dashboard_manage' 'warranty' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard_manage' and request.resolver_match.kwargs.section == 'warranty' %}is-active{% endif %}">Warranty</a>
+        <a href="{% url 'core:dashboard_manage' 'payments' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard_manage' and request.resolver_match.kwargs.section == 'payments' %}is-active{% endif %}">Payments</a>
+        <a href="{% url 'core:dashboard_manage' 'blog' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard_manage' and request.resolver_match.kwargs.section == 'blog' %}is-active{% endif %}">Blog</a>
+      </nav>
+      <div class="admin-console-actions">
+        <a href="{% url 'core:home' %}" class="admin-console-store-link"><i class="fa-solid fa-store"></i> View Store</a>
+        <span class="admin-console-user"><i class="fa-regular fa-user"></i> {{ user.first_name|default:user.username }}</span>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="admin-console-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </form>
+      </div>
+    </div>
+  </header>
+  {% else %}
   <div class="ticker-wrap">
     <div class="ticker-track">
       <div class="ticker-row">
@@ -38,10 +76,13 @@
           <span style="display:none;" class="text-xl font-semibold">Oalt EV</span>
         </a>
 
-        <a href="{% url 'core:contact_us' %}" class="amazon-location">
+        <button type="button" class="amazon-location" data-open-location-modal aria-label="Update delivery location">
           <i class="fa-solid fa-location-dot"></i>
-          <span><small>Delivering to India</small><strong>Update location</strong></span>
-        </a>
+          <span>
+            <small>Delivering to <span data-current-city>{{ current_city }}</span><span data-current-pincode-wrap{% if not current_pincode %} class="hidden"{% endif %}> - <span data-current-pincode>{{ current_pincode }}</span></span></small>
+            <strong>Update location</strong>
+          </span>
+        </button>
 
         <form action="{% url 'products:product_list' %}" method="get" class="amazon-search">
           <select name="category">
@@ -57,7 +98,7 @@
         </form>
 
         <div class="amazon-account-menu">
-          <a href="{% if user.is_authenticated %}{% url 'accounts:dashboard' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="amazon-top-link amazon-account-trigger" aria-label="Open account menu">
+          <a href="{% if user.is_authenticated %}{% if user.is_staff %}{% url 'core:dashboard' %}{% else %}{% url 'accounts:dashboard' %}{% endif %}{% else %}{% url 'accounts:login' %}{% endif %}" class="amazon-top-link amazon-account-trigger" aria-label="Open account menu">
             <small>{% if user.is_authenticated %}Hello, {{ user.first_name|default:user.username }}{% else %}Hello, sign in{% endif %}</small>
             <strong>Account & Lists <i class="fa-solid fa-caret-down"></i></strong>
           </a>
@@ -72,14 +113,12 @@
                 <a href="{% url 'core:dashboard_manage' 'warranty' %}" role="menuitem"><i class="fa-solid fa-id-card"></i> Warranty Claims</a>
                 <a href="{% url 'core:dashboard_manage' 'payments' %}" role="menuitem"><i class="fa-solid fa-money-check-dollar"></i> Payment Logs</a>
                 <a href="{% url 'core:dashboard' %}#reports" role="menuitem"><i class="fa-solid fa-chart-column"></i> Reports & MIS</a>
-                <a href="/admin/" role="menuitem"><i class="fa-solid fa-arrow-up-right-from-square"></i> Django Administration</a>
+                <a href="{% url 'core:home' %}" role="menuitem"><i class="fa-solid fa-store"></i> View Store</a>
+              {% else %}
+                <a href="{% url 'accounts:dashboard' %}" role="menuitem"><i class="fa-regular fa-user"></i> My Dashboard</a>
+                <a href="{% url 'accounts:dashboard' %}#order-tracking" role="menuitem"><i class="fa-solid fa-box-open"></i> My Orders</a>
+                <a href="{% url 'accounts:dashboard' %}#warranty-claim" role="menuitem"><i class="fa-solid fa-id-card"></i> Warranty Claims</a>
               {% endif %}
-              <a href="{% url 'accounts:dashboard' %}" role="menuitem"><i class="fa-regular fa-user"></i> My Dashboard</a>
-              <a href="{% url 'accounts:dashboard' %}#profile-settings" role="menuitem"><i class="fa-solid fa-user-gear"></i> Profile Settings</a>
-              <a href="{% url 'accounts:dashboard' %}#order-tracking" role="menuitem"><i class="fa-solid fa-box-open"></i> My Orders</a>
-              <a href="{% url 'accounts:dashboard' %}#warranty-claim" role="menuitem"><i class="fa-solid fa-id-card"></i> Warranty Claims</a>
-              <a href="{% url 'cart:cart_detail' %}" role="menuitem"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
-              <a href="{% url 'blog:list' %}" role="menuitem"><i class="fa-regular fa-newspaper"></i> Blog</a>
               <form method="post" action="{% url 'accounts:logout' %}" class="amazon-account-dropdown__logout">
                 {% csrf_token %}
                 <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
@@ -115,15 +154,31 @@
       <div class="amazon-nav-bottom">
         <div class="max-w-[1500px] mx-auto px-3">
           <nav class="amazon-menu-row">
-            <a href="{% url 'products:product_list' %}" class="{% if request.resolver_match.namespace == 'products' and request.resolver_match.url_name == 'product_list' %}is-active{% endif %}"><i class="fa-solid fa-bars"></i> All Bikes</a>
-            <a href="#" data-open-compare-popup>Compare <span class="compare-count-badge" data-compare-count>0</span></a>
-            <a href="{% url 'core:about_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'about_us' %}is-active{% endif %}">About Us</a>
-            <a href="{% url 'core:contact_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'contact_us' %}is-active{% endif %}">Contact Us</a>
-            <a href="{% url 'blog:list' %}" class="{% if request.resolver_match.namespace == 'blog' %}is-active{% endif %}">Blog</a>
-            <a href="{% url 'dealership:apply' %}" class="{% if request.resolver_match.namespace == 'dealership' %}is-active{% endif %}">Dealership</a>
-            <a href="{% url 'core:shipping_terms' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'shipping_terms' %}is-active{% endif %}">Shipping & Terms</a>
-            <a href="{% url 'core:return_refund' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'return_refund' %}is-active{% endif %}">Return & Refund</a>
-            <a href="{% url 'core:faq' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'faq' %}is-active{% endif %}">FAQ</a>
+            <div class="mega-category-menu">
+              <button type="button" class="mega-category-trigger {% if request.resolver_match.namespace == 'products' %}is-active{% endif %}" aria-haspopup="true" aria-expanded="false">
+                <i class="fa-solid fa-bars"></i> Products <i class="fa-solid fa-caret-down"></i>
+              </button>
+              <div class="mega-category-panel" role="menu" aria-label="Main categories">
+                <div class="mega-category-grid">
+                  {% for item in nav_main_categories %}
+                    <section class="mega-category-column">
+                      <a class="mega-category-parent" href="{{ item.url }}">{{ item.title }}</a>
+                      {% if item.children %}
+                        <ul>
+                          {% for child in item.children %}
+                            <li><a href="{{ child.url }}">{{ child.name }}</a></li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+                    </section>
+                  {% empty %}
+                    <section class="mega-category-column">
+                      <p class="mega-category-empty">No categories available.</p>
+                    </section>
+                  {% endfor %}
+                </div>
+                </div>
+            </div>
             <a class="amazon-menu-cta" href="https://wa.me/{{ whatsapp_phone }}?text=I%20want%20to%20book%20a%20test%20ride" target="_blank">Book a Test Ride</a>
           </nav>
         </div>
@@ -165,12 +220,12 @@
         <button id="menu-close" class="mobile-icon-btn" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <nav class="mobile-menu-links">
+        <button type="button" data-open-location-modal>
+          <i class="fa-solid fa-location-dot"></i>
+          Delivering to <span data-current-city>{{ current_city }}</span><span data-current-pincode-wrap{% if not current_pincode %} class="hidden"{% endif %}> - <span data-current-pincode>{{ current_pincode }}</span></span> • Update location
+        </button>
         <a href="{% url 'products:product_list' %}" class="{% if request.resolver_match.namespace == 'products' and request.resolver_match.url_name == 'product_list' %}is-active{% endif %}"><i class="fa-solid fa-store"></i> All Bikes</a>
         <a href="#" data-open-compare-popup><i class="fa-solid fa-code-compare"></i> Compare <span class="compare-count-badge" data-compare-count>0</span></a>
-        <a href="{% url 'core:about_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'about_us' %}is-active{% endif %}"><i class="fa-solid fa-building"></i> About Us</a>
-        <a href="{% url 'core:contact_us' %}" class="{% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'contact_us' %}is-active{% endif %}"><i class="fa-solid fa-envelope"></i> Contact Us</a>
-        <a href="{% url 'blog:list' %}" class="{% if request.resolver_match.namespace == 'blog' %}is-active{% endif %}"><i class="fa-solid fa-newspaper"></i> Blog</a>
-        <a href="{% url 'dealership:apply' %}" class="{% if request.resolver_match.namespace == 'dealership' %}is-active{% endif %}"><i class="fa-solid fa-handshake"></i> Dealership</a>
         <a href="{% url 'cart:cart_detail' %}" class="{% if request.resolver_match.namespace == 'cart' %}is-active{% endif %}"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
         {% if user.is_authenticated %}
           {% if user.is_staff %}
@@ -193,6 +248,49 @@
       </a>
     </aside>
   </div>
+  <div id="location-modal" class="location-modal hidden" aria-hidden="true">
+    <div class="location-modal-card" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
+      <button type="button" id="location-modal-close" class="location-modal-close" aria-label="Close location popup">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 id="location-modal-title">Set Delivery Location</h3>
+      <p class="location-modal-copy">Enable location for auto detection or set city + pincode for delivery-zone mapping readiness.</p>
+
+      <div class="location-mode-switch" role="tablist" aria-label="Location mode">
+        <button type="button" class="location-mode-btn is-active" data-location-mode-btn="city" aria-selected="true">City</button>
+        <button type="button" class="location-mode-btn" data-location-mode-btn="pincode" aria-selected="false">Pincode</button>
+      </div>
+
+      <button type="button" id="detect-location-btn" class="location-detect-btn">
+        <i class="fa-solid fa-location-crosshairs"></i>
+        Detect Current Location
+      </button>
+
+      <div id="location-loading" class="location-loading hidden">
+        <span class="location-spinner" aria-hidden="true"></span>
+        <span>Detecting your location...</span>
+      </div>
+
+      <p id="location-status" class="location-status hidden" role="status"></p>
+
+      <div id="manual-location-wrap" class="manual-location-wrap">
+        <div class="manual-location-fields">
+          <div id="manual-city-field">
+            <label for="manual-city-input">City</label>
+            <input type="text" id="manual-city-input" placeholder="e.g. New Delhi" maxlength="80" autocomplete="address-level2">
+          </div>
+          <div id="manual-pincode-field">
+            <label for="manual-pincode-input">Pincode</label>
+            <input type="text" id="manual-pincode-input" placeholder="6-digit PIN code" maxlength="6" pattern="[0-9]*" inputmode="numeric">
+          </div>
+        </div>
+        <div class="manual-location-row">
+          <button type="button" id="manual-city-save-btn">Save Location</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   {% if messages %}
     <div class="flash-stack flash-stack--toast" aria-live="polite">
@@ -254,6 +352,7 @@
     </div>
   </div>
 
+  {% if not is_admin_console %}
   <nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
     <a href="{% url 'core:home' %}" class="mobile-bottom-nav__item {% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'home' %}is-active{% endif %}">
       <i class="fa-solid fa-house"></i>
@@ -276,6 +375,7 @@
       <span>Account</span>
     </a>
   </nav>
+  {% endif %}
 
   <footer class="mt-16">
     <div class="footer-main">
@@ -462,8 +562,239 @@
     window.__EMI_LEAD_ENDPOINT__ = "{% url 'products:submit_emi_lead' %}";
     window.__COMPARE_OPTIONS_ENDPOINT__ = "{% url 'products:compare_options_api' %}";
     window.__COMPARE_DATA_ENDPOINT__ = "{% url 'products:compare_data_api' %}";
+    window.__LOCATION_DETECT_ENDPOINT__ = "{% url 'core:detect_location' %}";
+    window.__LOCATION_MANUAL_ENDPOINT__ = "{% url 'core:set_manual_location' %}";
+  </script>
+  <script>
+    (function () {
+      const locationModal = document.getElementById("location-modal");
+      const openButtons = document.querySelectorAll("[data-open-location-modal]");
+      const closeButton = document.getElementById("location-modal-close");
+      const detectButton = document.getElementById("detect-location-btn");
+      const loadingBlock = document.getElementById("location-loading");
+      const statusBlock = document.getElementById("location-status");
+      const manualWrap = document.getElementById("manual-location-wrap");
+      const manualCityInput = document.getElementById("manual-city-input");
+      const manualPincodeInput = document.getElementById("manual-pincode-input");
+      const manualSaveButton = document.getElementById("manual-city-save-btn");
+      const cityField = document.getElementById("manual-city-field");
+      const pincodeField = document.getElementById("manual-pincode-field");
+      const modeButtons = document.querySelectorAll("[data-location-mode-btn]");
+      const cityTargets = document.querySelectorAll("[data-current-city]");
+      const pincodeTargets = document.querySelectorAll("[data-current-pincode]");
+      const pincodeWrapTargets = document.querySelectorAll("[data-current-pincode-wrap]");
+      const detectEndpoint = window.__LOCATION_DETECT_ENDPOINT__;
+      const manualEndpoint = window.__LOCATION_MANUAL_ENDPOINT__;
+      let activeMode = "city";
+
+      if (!locationModal || !detectButton || !manualSaveButton || !detectEndpoint || !manualEndpoint) return;
+
+      const getCsrfToken = () => {
+        const matched = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+        return matched ? decodeURIComponent(matched[1]) : "";
+      };
+
+      const setStatus = (message, type) => {
+        statusBlock.textContent = message || "";
+        statusBlock.classList.remove("hidden", "is-success", "is-error", "is-info");
+        if (!message) {
+          statusBlock.classList.add("hidden");
+          return;
+        }
+        statusBlock.classList.add(type === "success" ? "is-success" : type === "error" ? "is-error" : "is-info");
+      };
+
+      const showManualInput = (focusInput) => {
+        manualWrap.classList.remove("hidden");
+        if (focusInput) {
+          if (activeMode === "pincode" && manualPincodeInput) {
+            manualPincodeInput.focus();
+          } else if (manualCityInput) {
+            manualCityInput.focus();
+          }
+        }
+      };
+
+      const setMode = (mode) => {
+        activeMode = mode === "pincode" ? "pincode" : "city";
+        modeButtons.forEach((btn) => {
+          const isActive = btn.getAttribute("data-location-mode-btn") === activeMode;
+          btn.classList.toggle("is-active", isActive);
+          btn.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        if (cityField) cityField.classList.toggle("hidden", activeMode === "pincode");
+        if (pincodeField) pincodeField.classList.toggle("hidden", activeMode === "city");
+      };
+
+      const setLoading = (isLoading) => {
+        loadingBlock.classList.toggle("hidden", !isLoading);
+        detectButton.disabled = isLoading;
+        manualSaveButton.disabled = isLoading;
+      };
+
+      const openModal = () => {
+        locationModal.classList.remove("hidden");
+        locationModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setMode(activeMode);
+        setStatus("", "info");
+      };
+
+      const closeModal = () => {
+        locationModal.classList.add("hidden");
+        locationModal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        setLoading(false);
+      };
+
+      const updateNavbarCity = (city) => {
+        cityTargets.forEach((target) => {
+          target.textContent = city;
+        });
+      };
+
+      const updateNavbarPincode = (pincode) => {
+        pincodeTargets.forEach((target) => {
+          target.textContent = pincode || "";
+        });
+        pincodeWrapTargets.forEach((target) => {
+          target.classList.toggle("hidden", !pincode);
+        });
+      };
+
+      const postJson = async (url, payload) => {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: JSON.stringify(payload),
+        });
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (err) {
+          data = { ok: false, error: "Unexpected response from server." };
+        }
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Unable to process location request.");
+        }
+        return data;
+      };
+
+      const detectLocation = () => {
+        if (!navigator.geolocation) {
+          setStatus("Location detection is not supported on this browser. Enter city manually.", "error");
+          showManualInput(true);
+          return;
+        }
+
+        setLoading(true);
+        setStatus("Requesting location access...", "info");
+
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const data = await postJson(detectEndpoint, {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              });
+              updateNavbarCity(data.city);
+              updateNavbarPincode(data.pincode || "");
+              setStatus(`Location updated: ${data.city}`, "success");
+              setTimeout(closeModal, 700);
+            } catch (error) {
+              setStatus(error.message || "Unable to detect city. Enter manually.", "error");
+              showManualInput(true);
+            } finally {
+              setLoading(false);
+            }
+          },
+          (error) => {
+            let errorText = "Unable to access your location.";
+            if (error && error.code === error.PERMISSION_DENIED) {
+              errorText = "Location permission denied. Please enter your city manually.";
+            } else if (error && error.code === error.TIMEOUT) {
+              errorText = "Location request timed out. Please try again or enter city manually.";
+            }
+            setStatus(errorText, "error");
+            showManualInput(true);
+            setLoading(false);
+          },
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 120000 }
+        );
+      };
+
+      const saveManualLocation = async () => {
+        const city = (manualCityInput ? manualCityInput.value : "").trim();
+        const pincode = ((manualPincodeInput ? manualPincodeInput.value : "").trim() || "").replace(/\D/g, "");
+
+        if (activeMode === "city" && city.length < 2) {
+          setStatus("Please enter a valid city name.", "error");
+          if (manualCityInput) manualCityInput.focus();
+          return;
+        }
+        if (activeMode === "pincode" && pincode.length !== 6) {
+          setStatus("Please enter a valid 6-digit PIN code.", "error");
+          if (manualPincodeInput) manualPincodeInput.focus();
+          return;
+        }
+
+        setLoading(true);
+        setStatus("Saving your location...", "info");
+        try {
+          const data = await postJson(manualEndpoint, { city, pincode, mode: activeMode });
+          updateNavbarCity(data.city);
+          updateNavbarPincode(data.pincode || "");
+          setStatus(`Location updated: ${data.city}`, "success");
+          setTimeout(closeModal, 700);
+        } catch (error) {
+          setStatus(error.message || "Unable to save city.", "error");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      openButtons.forEach((button) => {
+        button.addEventListener("click", openModal);
+      });
+      closeButton.addEventListener("click", closeModal);
+      locationModal.addEventListener("click", (event) => {
+        if (event.target === locationModal) closeModal();
+      });
+      detectButton.addEventListener("click", detectLocation);
+      manualSaveButton.addEventListener("click", saveManualLocation);
+      modeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => setMode(btn.getAttribute("data-location-mode-btn")));
+      });
+      if (manualCityInput) {
+        manualCityInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            saveManualLocation();
+          }
+        });
+      }
+      if (manualPincodeInput) {
+        manualPincodeInput.addEventListener("input", () => {
+          manualPincodeInput.value = manualPincodeInput.value.replace(/\D/g, "").slice(0, 6);
+        });
+        manualPincodeInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            saveManualLocation();
+          }
+        });
+      }
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !locationModal.classList.contains("hidden")) {
+          closeModal();
+        }
+      });
+    })();
   </script>
   {% block structured_data %}{% endblock %}
 </body>
 </html>
-

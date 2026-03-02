@@ -158,7 +158,7 @@
         <h2><i class="fa-solid fa-receipt"></i> Order Summary</h2>
         <p class="checkout-summary-sub">Review your items and total before payment.</p>
         <div class="checkout-summary-items">
-          {% for item in cart.items.all %}
+          {% for item in cart_items %}
             <article class="checkout-summary-item">
               <div>
                 <h3>{{ item.product.name }}</h3>

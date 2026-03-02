@@ -1,20 +1,24 @@
 import csv
 import hmac
 import json
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+import requests
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.mail import mail_admins
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from apps.accounts.models import WarrantyClaim
@@ -110,36 +114,144 @@ LEGAL_PAGES = {
     },
 }
 
+CITY_TEXT_PATTERN = re.compile(r"[^a-zA-Z0-9 .,'\-]")
+PINCODE_PATTERN = re.compile(r"\D")
+
+
+def _clean_city_name(raw_city: str) -> str:
+    text = (raw_city or "").strip()
+    text = CITY_TEXT_PATTERN.sub("", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text[:80]
+
+
+def _extract_city_from_reverse_data(payload: dict) -> str:
+    address = payload.get("address") or {}
+    possible_fields = (
+        "city",
+        "town",
+        "village",
+        "municipality",
+        "county",
+        "state_district",
+        "state",
+    )
+    for field in possible_fields:
+        city_value = _clean_city_name(address.get(field, ""))
+        if city_value:
+            return city_value
+    return ""
+
+
+def _clean_pincode(raw_pincode: str) -> str:
+    digits = PINCODE_PATTERN.sub("", (raw_pincode or "").strip())
+    if len(digits) >= 6:
+        return digits[:6]
+    return ""
+
+
+def _extract_pincode_from_reverse_data(payload: dict) -> str:
+    address = payload.get("address") or {}
+    return _clean_pincode(address.get("postcode", ""))
+
 
 class HomeView(TemplateView):
     template_name = "core/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        featured_products = Product.objects.filter(is_featured=True, is_active=True).prefetch_related(
-            Prefetch("variants", queryset=ProductVariant.objects.filter(is_active=True).only("id", "product_id", "color_code"))
-        )[:8]
-        hero_slides = HomeHeroSlide.objects.filter(is_active=True).only("title", "subtitle", "cta_text", "cta_url", "image", "order")[:6]
+        home_cache_key = "home_view_payload_v3"
+        home_payload = cache.get(home_cache_key)
+        if home_payload is None:
+            featured_products = list(
+                Product.objects.filter(is_featured=True, is_active=True)
+                .select_related("category")
+                .prefetch_related(
+                    Prefetch(
+                        "variants",
+                        queryset=ProductVariant.objects.filter(is_active=True).only(
+                            "id",
+                            "product_id",
+                            "color_name",
+                            "color_code",
+                            "image",
+                            "additional_price",
+                            "stock",
+                        ),
+                    )
+                )
+                .only(
+                    "id",
+                    "name",
+                    "slug",
+                    "category__name",
+                    "short_description",
+                    "price",
+                    "discount_price",
+                    "battery_capacity_kwh",
+                    "range_per_charge_km",
+                    "main_image",
+                )[:8]
+            )
+            hero_slides = list(
+                HomeHeroSlide.objects.filter(is_active=True)
+                .only("title", "subtitle", "cta_text", "cta_url", "image", "order")
+                .order_by("order", "id")[:6]
+            )
+            latest_posts = list(
+                BlogPost.objects.filter(is_published=True).only("title", "slug", "excerpt", "cover_image", "published_at")[:4]
+            )
+            testimonials = list(
+                Testimonial.objects.filter(is_active=True).only("name", "designation", "image", "content", "rating")[:12]
+            )
+            feature_cards = list(
+                HomeFeatureCard.objects.filter(is_active=True).only("title", "description", "image", "card_type", "order")[:6]
+            )
+            mode_cards = list(
+                HomeModeCard.objects.filter(is_active=True).only("title", "description", "image", "order")[:6]
+            )
+            home_sections = {
+                item.key: item
+                for item in HomeSectionConfig.objects.filter(is_active=True).only(
+                    "key", "heading", "subheading", "cta_text", "cta_url", "image"
+                )
+            }
+            site_content_map = {
+                item.key: item
+                for item in SiteContent.objects.filter(
+                    is_active=True,
+                    key__in=[
+                        "hero_visual_mode",
+                        "hero_background_image",
+                        "hero_product_image",
+                        "hero_heading",
+                        "hero_subheading",
+                        "hero_cta",
+                    ],
+                ).only("key", "title", "subtitle", "image")
+            }
+            home_payload = {
+                "featured_products": featured_products,
+                "hero_slides": hero_slides,
+                "latest_posts": latest_posts,
+                "testimonials": testimonials,
+                "feature_cards": feature_cards,
+                "mode_cards": mode_cards,
+                "home_sections": home_sections,
+                "site_content_map": site_content_map,
+            }
+            cache.set(home_cache_key, home_payload, 600)
+
+        featured_products = home_payload["featured_products"]
+        hero_slides = home_payload["hero_slides"]
+        site_content_map = home_payload["site_content_map"]
         context["featured_products"] = featured_products
-        context["latest_posts"] = BlogPost.objects.filter(is_published=True)[:4]
-        context["testimonials"] = Testimonial.objects.filter(is_active=True)[:12]
+        context["latest_posts"] = home_payload["latest_posts"]
+        context["testimonials"] = home_payload["testimonials"]
         context["hero_slides"] = hero_slides
-        context["feature_cards"] = HomeFeatureCard.objects.filter(is_active=True).only("title", "description", "image", "card_type", "order")[:6]
-        context["mode_cards"] = HomeModeCard.objects.filter(is_active=True).only("title", "description", "image", "order")[:6]
-        configs = HomeSectionConfig.objects.filter(is_active=True).only("key", "heading", "subheading", "cta_text", "cta_url", "image")
-        context["home_sections"] = {item.key: item for item in configs}
-        site_content_items = SiteContent.objects.filter(
-            is_active=True,
-            key__in=[
-                "hero_visual_mode",
-                "hero_background_image",
-                "hero_product_image",
-                "hero_heading",
-                "hero_subheading",
-                "hero_cta",
-            ],
-        ).only("key", "title", "subtitle", "image")
-        site_content_map = {item.key: item for item in site_content_items}
+        context["feature_cards"] = home_payload["feature_cards"]
+        context["mode_cards"] = home_payload["mode_cards"]
+        context["home_sections"] = home_payload["home_sections"]
 
         hero_mode_item = site_content_map.get("hero_visual_mode")
         hero_visual_mode = (hero_mode_item.title.strip().lower() if hero_mode_item and hero_mode_item.title else "gradient")
@@ -656,6 +768,115 @@ DASHBOARD_MANAGE_SECTIONS = {
 }
 
 
+def _post_list(request, key):
+    return request.POST.getlist(key) or request.POST.getlist(f"{key}[]")
+
+
+def _safe_decimal(value, default=None):
+    if value in (None, ""):
+        return default
+    try:
+        return Decimal(str(value))
+    except Exception:
+        return default
+
+
+def _build_specs_from_post(request):
+    keys = _post_list(request, "spec_key")
+    values = _post_list(request, "spec_value")
+    row_count = max(len(keys), len(values), 1)
+
+    specs = {}
+    rows = []
+    for idx in range(row_count):
+        key = (keys[idx] if idx < len(keys) else "").strip()
+        value = (values[idx] if idx < len(values) else "").strip()
+        if key or value:
+            rows.append({"key": key, "value": value})
+        if key:
+            specs[key] = value
+
+    if not rows:
+        rows = [{"key": "", "value": ""}]
+    return specs, rows
+
+
+def _build_variants_from_post(request):
+    row_indices = _post_list(request, "variant_row_index")
+    if not row_indices:
+        row_indices = ["0"]
+
+    variants = []
+    rows = []
+    errors = []
+    seen_color_names = set()
+
+    for raw_idx in row_indices:
+        idx = (raw_idx or "").strip()
+        if not idx:
+            continue
+
+        color_name = (request.POST.get(f"variant_color_name_{idx}") or "").strip()
+        color_code = (request.POST.get(f"variant_color_code_{idx}") or "").strip()
+        stock_raw = (request.POST.get(f"variant_stock_{idx}") or "").strip()
+        additional_price_raw = (request.POST.get(f"variant_additional_price_{idx}") or "").strip()
+        image = request.FILES.get(f"variant_image_{idx}")
+
+        has_data = any([color_name, color_code, stock_raw, additional_price_raw, image])
+        normalized_color_code = color_code
+        if normalized_color_code and not normalized_color_code.startswith("#"):
+            normalized_color_code = f"#{normalized_color_code}"
+        if normalized_color_code:
+            normalized_color_code = normalized_color_code.upper()
+
+        row = {
+            "index": idx,
+            "color_name": color_name,
+            "color_code": normalized_color_code or color_code,
+            "stock": stock_raw or "0",
+            "additional_price": additional_price_raw,
+        }
+        rows.append(row)
+
+        if not has_data:
+            continue
+
+        row_errors = []
+        if not color_name:
+            row_errors.append("color name is required")
+        if not normalized_color_code or len(normalized_color_code) != 7 or not normalized_color_code.startswith("#"):
+            row_errors.append("valid hex color code is required (example: #C02222)")
+        stock = _safe_int(stock_raw, 0)
+        if stock is None or stock < 0:
+            row_errors.append("stock must be 0 or more")
+        additional_price = _safe_decimal(additional_price_raw, None)
+        if additional_price_raw and additional_price is None:
+            row_errors.append("additional price is invalid")
+        if image is None:
+            row_errors.append("image is required")
+        if color_name and color_name.lower() in seen_color_names:
+            row_errors.append("duplicate color name in variants")
+
+        if row_errors:
+            errors.append(f"Variant row {idx}: " + ", ".join(row_errors) + ".")
+            continue
+
+        seen_color_names.add(color_name.lower())
+        variants.append(
+            {
+                "color_name": color_name,
+                "color_code": normalized_color_code,
+                "stock": stock,
+                "additional_price": additional_price,
+                "image": image,
+            }
+        )
+
+    if not rows:
+        rows = [{"index": "0", "color_name": "", "color_code": "#000000", "stock": "0", "additional_price": ""}]
+    return variants, rows, errors
+
+
 @staff_member_required(login_url="accounts:login")
 def dashboard_manage(request, section):
     if section not in DASHBOARD_MANAGE_SECTIONS:
@@ -666,6 +887,8 @@ def dashboard_manage(request, section):
     period = _dashboard_period_from_request(request, today)
     search_query = (request.GET.get("q") or "").strip()
     product_create_form = DashboardProductCreateForm() if section == "products" else None
+    product_spec_rows = [{"key": "", "value": ""}]
+    product_variant_rows = [{"index": "0", "color_name": "", "color_code": "#000000", "stock": "0", "additional_price": ""}]
 
     def _redirect_self():
         query = period["query_string"]
@@ -706,18 +929,36 @@ def dashboard_manage(request, section):
                 if stock is None:
                     stock = product.stock
                 product.stock = max(stock, 0)
-                product.is_active = request.POST.get("is_active") == "on"
+                listing_status = (request.POST.get("listing_status") or "published").strip().lower()
+                product.is_active = listing_status == "published"
                 product.is_featured = request.POST.get("is_featured") == "on"
                 product.save(update_fields=["stock", "is_active", "is_featured", "updated_at"])
                 messages.success(request, f"Product '{product.name}' updated.")
             return _redirect_self()
 
         if section == "products" and action == "create_product":
+            technical_specs, product_spec_rows = _build_specs_from_post(request)
+            variants_payload, product_variant_rows, variant_errors = _build_variants_from_post(request)
             product_create_form = DashboardProductCreateForm(request.POST, request.FILES)
-            if product_create_form.is_valid():
-                created_product = product_create_form.save()
+            if product_create_form.is_valid() and not variant_errors:
+                created_product = product_create_form.save(commit=False)
+                created_product.technical_specifications = technical_specs
+                created_product.save()
+
+                for variant_data in variants_payload:
+                    ProductVariant.objects.create(
+                        product=created_product,
+                        color_name=variant_data["color_name"],
+                        color_code=variant_data["color_code"],
+                        image=variant_data["image"],
+                        stock=variant_data["stock"],
+                        additional_price=variant_data["additional_price"],
+                        is_active=True,
+                    )
                 messages.success(request, f"New product '{created_product.name}' listed successfully.")
                 return _redirect_self()
+            for err in variant_errors:
+                product_create_form.add_error(None, err)
             messages.error(request, "Please fix the product listing form errors and submit again.")
 
         if section == "categories" and action == "toggle_category":
@@ -828,8 +1069,113 @@ def dashboard_manage(request, section):
         "dashboard_links": _dashboard_section_links(),
         "admin_url": reverse("admin:index"),
         "product_create_form": product_create_form,
+        "product_spec_rows": product_spec_rows,
+        "product_variant_rows": product_variant_rows,
     }
     return render(request, "dashboard/manage.html", context)
+
+
+@require_POST
+def detect_location(request):
+    if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+        return JsonResponse({"ok": False, "error": "Invalid request type."}, status=400)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Invalid JSON payload."}, status=400)
+
+    lat_raw = payload.get("latitude", payload.get("lat"))
+    lng_raw = payload.get("longitude", payload.get("lng"))
+
+    try:
+        latitude = float(lat_raw)
+        longitude = float(lng_raw)
+    except (TypeError, ValueError):
+        return JsonResponse({"ok": False, "error": "Latitude and longitude are required."}, status=400)
+
+    if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+        return JsonResponse({"ok": False, "error": "Coordinates are out of valid range."}, status=400)
+
+    try:
+        reverse_resp = requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={
+                "format": "jsonv2",
+                "lat": latitude,
+                "lon": longitude,
+                "zoom": 10,
+                "addressdetails": 1,
+            },
+            headers={"User-Agent": "OaltEVStore/1.0 (support@oaltev.com)"},
+            timeout=8,
+        )
+        reverse_resp.raise_for_status()
+        reverse_payload = reverse_resp.json()
+    except requests.RequestException:
+        return JsonResponse(
+            {"ok": False, "error": "City detect service is unavailable right now. Please enter city manually."},
+            status=502,
+        )
+
+    city = _extract_city_from_reverse_data(reverse_payload)
+    pincode = _extract_pincode_from_reverse_data(reverse_payload)
+    if not city:
+        return JsonResponse({"ok": False, "error": "Unable to detect your city. Please enter it manually."}, status=422)
+
+    request.session["current_city"] = city
+    if pincode:
+        request.session["current_pincode"] = pincode
+    else:
+        request.session.pop("current_pincode", None)
+    request.session["current_location"] = {"lat": round(latitude, 6), "lng": round(longitude, 6)}
+    request.session.modified = True
+    return JsonResponse({"ok": True, "city": city, "pincode": pincode})
+
+
+@require_POST
+def set_manual_location(request):
+    if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+        return JsonResponse({"ok": False, "error": "Invalid request type."}, status=400)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Invalid JSON payload."}, status=400)
+
+    city_raw = payload.get("city", "")
+    pincode_raw = payload.get("pincode", "")
+    city = _clean_city_name(city_raw)
+    pincode = _clean_pincode(pincode_raw)
+
+    mode = (payload.get("mode") or "city").strip().lower()
+    if mode not in {"city", "pincode"}:
+        mode = "city"
+
+    if mode == "city" and len(city) < 2:
+        return JsonResponse({"ok": False, "error": "Please enter a valid city name."}, status=400)
+    if mode == "pincode" and len(pincode) != 6:
+        return JsonResponse({"ok": False, "error": "Please enter a valid 6-digit PIN code."}, status=400)
+
+    if city:
+        request.session["current_city"] = city
+    elif not request.session.get("current_city"):
+        request.session["current_city"] = "India"
+
+    if pincode:
+        request.session["current_pincode"] = pincode
+    else:
+        request.session.pop("current_pincode", None)
+
+    request.session.pop("current_location", None)
+    request.session.modified = True
+    return JsonResponse(
+        {
+            "ok": True,
+            "city": request.session.get("current_city", "India"),
+            "pincode": request.session.get("current_pincode", ""),
+        }
+    )
 
 
 def about_us(request):

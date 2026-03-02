@@ -98,6 +98,30 @@ npx tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch
 ```
 5. Replace CDN script in `templates/base.html` with compiled CSS link.
 
+## 4.1) Frontend Minify + Critical CSS Pipeline
+
+For production delivery with lower CSS/JS payload:
+
+1. Build optimized assets:
+```bash
+python manage.py build_assets
+```
+This generates:
+- `static/css/theme.min.css`
+- `static/css/critical.min.css`
+- `static/js/main.min.js`
+
+2. Enable minified assets in `.env`:
+```env
+ASSET_MINIFY_ENABLED=True
+CRITICAL_CSS_FILE=css/critical.min.css
+```
+
+3. (Optional) asset cache-bust version:
+```env
+ASSET_VERSION=20260302
+```
+
 ## 5) Razorpay Flow
 
 1. `orders.checkout` creates Order from Cart.
@@ -113,6 +137,7 @@ npx tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch
 2. Set production env vars (`DEBUG=False`, secure key, hosts, DB, email, Razorpay).
 3. Collect static:
 ```bash
+python manage.py build_assets
 python manage.py collectstatic --noinput
 ```
 4. Run with Gunicorn/Uvicorn behind Nginx.

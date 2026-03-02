@@ -13,7 +13,10 @@ class BlogPost(models.Model):
 
     class Meta:
         ordering = ["-published_at"]
-        indexes = [models.Index(fields=["slug", "is_published"])]
+        indexes = [
+            models.Index(fields=["slug", "is_published"]),
+            models.Index(fields=["is_published", "published_at"]),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:

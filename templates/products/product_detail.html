@@ -7,16 +7,16 @@
     <aside class="pdp-gallery">
       <div class="pdp-thumb-list">
         <button class="pdp-thumb is-active" data-pdp-thumb data-image="{{ product.main_image.url }}" type="button">
-          <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+          <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
         </button>
         {% for image in product.images.all %}
           <button class="pdp-thumb" data-pdp-thumb data-image="{{ image.image.url }}" type="button">
-            <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}" loading="lazy">
+            <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}" loading="lazy" decoding="async">
           </button>
         {% endfor %}
       </div>
       <div class="pdp-main-image-wrap" data-pdp-zoom-wrap>
-        <img id="pdp-main-image" data-pdp-zoom-image src="{% if selected_variant %}{{ selected_variant.image.url }}{% else %}{{ product.main_image.url }}{% endif %}" alt="{{ product.name }}" class="pdp-main-image">
+        <img id="pdp-main-image" data-pdp-zoom-image src="{% if selected_variant %}{{ selected_variant.image.url }}{% else %}{{ product.main_image.url }}{% endif %}" alt="{{ product.name }}" class="pdp-main-image" decoding="async" fetchpriority="high">
         <span class="pdp-zoom-lens" data-pdp-zoom-lens></span>
       </div>
       <div class="pdp-zoom-preview" data-pdp-zoom-preview aria-hidden="true"></div>
@@ -28,7 +28,7 @@
         <a href="{% url 'products:product_list' %}">Visit the {{ product.category.name }} Store</a>
       </div>
       <div class="pdp-rating-line">
-        <span class="pdp-rating-score">{{ product.rating }}</span>
+        <span class="pdp-rating-score">{{ product_rating }}</span>
         <span class="pdp-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></span>
         <span class="pdp-review-count">({{ review_count }})</span>
       </div>

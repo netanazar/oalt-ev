@@ -14,9 +14,19 @@ from .services import get_or_create_cart
 
 def cart_detail(request):
     cart = get_or_create_cart(request)
-    cart_items = cart.items.select_related("product", "variant")
-    cart_product_ids = list(cart_items.values_list("product_id", flat=True))
-    recommendations = Product.objects.filter(is_active=True).exclude(id__in=cart_product_ids).order_by("-is_featured", "-created_at")[:4]
+    cart_items = list(cart.items.select_related("product", "variant"))
+    cart._prefetched_objects_cache = {"items": cart_items}
+    cart_product_ids = [item.product_id for item in cart_items]
+    recommendations = Product.objects.filter(is_active=True).exclude(id__in=cart_product_ids).only(
+        "id",
+        "name",
+        "slug",
+        "price",
+        "discount_price",
+        "main_image",
+        "is_featured",
+        "created_at",
+    ).order_by("-is_featured", "-created_at")[:4]
     eta_from = timezone.localdate() + timedelta(days=3)
     eta_to = timezone.localdate() + timedelta(days=6)
     context = {
@@ -89,6 +99,8 @@ def apply_coupon(request):
     if coupon and coupon.is_valid():
         cart.coupon = coupon
         cart.save(update_fields=["coupon"])
+        cart.__dict__.pop("_calculated_totals", None)
+        cart.__dict__.pop("_line_items", None)
         success = True
         message = "Coupon applied successfully."
 

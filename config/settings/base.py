@@ -1,8 +1,10 @@
+import logging
 import os
 from importlib.util import find_spec
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 
 def load_dotenv(filepath: Path):
     if not filepath.exists():
@@ -24,7 +26,15 @@ def env_bool(key: str, default: bool = False):
 
 
 def env_int(key: str, default: int = 0):
-    return int(os.getenv(key, str(default)))
+    try:
+        return int(os.getenv(key, str(default)))
+    except (TypeError, ValueError):
+        return default
+
+
+def env_list(key: str, default: str = ""):
+    value = env(key, default)
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def has_module(module_name: str) -> bool:
@@ -35,7 +45,8 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY", "change-me")
 DEBUG = env_bool("DEBUG", False)
-ALLOWED_HOSTS = [h.strip() for h in env("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")]
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "127.0.0.1,localhost")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -80,12 +91,15 @@ if SOCIAL_AUTH_AVAILABLE:
         "allauth",
         "allauth.account",
         "allauth.socialaccount",
-        "allauth.socialaccount.providers.google",
-        "allauth.socialaccount.providers.facebook",
     ]
+    if SOCIAL_GOOGLE_ENABLED:
+        INSTALLED_APPS.append("allauth.socialaccount.providers.google")
+    if SOCIAL_FACEBOOK_ENABLED:
+        INSTALLED_APPS.append("allauth.socialaccount.providers.facebook")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -93,7 +107,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
 ]
 
 if SOCIAL_AUTH_AVAILABLE:
@@ -135,6 +148,8 @@ if DB_ENGINE == "postgresql":
             "PASSWORD": env("DB_PASSWORD", "postgres"),
             "HOST": env("DB_HOST", "127.0.0.1"),
             "PORT": env("DB_PORT", "5432"),
+            "CONN_MAX_AGE": env_int("DB_CONN_MAX_AGE", 120),
+            "CONN_HEALTH_CHECKS": env_bool("DB_CONN_HEALTH_CHECKS", True),
         }
     }
 else:
@@ -144,6 +159,9 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+if env_bool("ATOMIC_REQUESTS", False):
+    DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -160,6 +178,31 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_MAX_AGE = env_int("WHITENOISE_MAX_AGE", 31536000 if not DEBUG else 0)
+WHITENOISE_KEEP_ONLY_HASHED_FILES = env_bool("WHITENOISE_KEEP_ONLY_HASHED_FILES", not DEBUG)
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "avif",
+    "mp4",
+    "webm",
+    "woff",
+    "woff2",
+)
+WHITENOISE_IMMUTABLE_FILE_TEST = r"^.+\.[0-9a-f]{8,12}\..+$"
+
+ASSET_MINIFY_ENABLED = env_bool("ASSET_MINIFY_ENABLED", not DEBUG)
+ASSET_VERSION = env("ASSET_VERSION", "")
+CRITICAL_CSS_FILE = env("CRITICAL_CSS_FILE", "css/critical.min.css")
+TAILWIND_CDN_ENABLED = env_bool("TAILWIND_CDN_ENABLED", True)
+FONT_AWESOME_CDN_ENABLED = env_bool("FONT_AWESOME_CDN_ENABLED", True)
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -208,11 +251,13 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "noreply@example.com")
+SERVER_EMAIL = env("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+ADMINS = [tuple(item.split(":", 1)) for item in env_list("ADMINS", "") if ":" in item]
 
 SITE_BASE_URL = env("SITE_BASE_URL", "http://127.0.0.1:8000")
 WHATSAPP_PHONE = env("WHATSAPP_PHONE", "917291880088")
-SALES_TEAM_EMAILS = [x.strip() for x in env("SALES_TEAM_EMAILS", "").split(",") if x.strip()]
-SALES_TEAM_WHATSAPP_NUMBERS = [x.strip() for x in env("SALES_TEAM_WHATSAPP_NUMBERS", "").split(",") if x.strip()]
+SALES_TEAM_EMAILS = env_list("SALES_TEAM_EMAILS", "")
+SALES_TEAM_WHATSAPP_NUMBERS = env_list("SALES_TEAM_WHATSAPP_NUMBERS", "")
 WHATSAPP_API_URL = env("WHATSAPP_API_URL", "")
 WHATSAPP_API_TOKEN = env("WHATSAPP_API_TOKEN", "")
 
@@ -220,3 +265,79 @@ RAZORPAY_KEY_ID = env("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = env("RAZORPAY_KEY_SECRET", "")
 RAZORPAY_WEBHOOK_SECRET = env("RAZORPAY_WEBHOOK_SECRET", "")
 RAZORPAY_CURRENCY = env("RAZORPAY_CURRENCY", "INR")
+
+REDIS_URL = env("REDIS_URL", "").strip()
+REDIS_BACKEND_AVAILABLE = has_module("django_redis")
+if REDIS_URL and REDIS_BACKEND_AVAILABLE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+            "KEY_PREFIX": "oalt",
+            "TIMEOUT": env_int("CACHE_TIMEOUT", 900),
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+    SESSION_CACHE_ALIAS = "default"
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "oalt-ev-local-cache",
+            "TIMEOUT": env_int("CACHE_TIMEOUT", 300),
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+CACHE_TTL = env_int("CACHE_TTL", 900)
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = env("SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin")
+SECURE_CROSS_ORIGIN_OPENER_POLICY = env("SECURE_CROSS_ORIGIN_OPENER_POLICY", "same-origin")
+SECURE_CROSS_ORIGIN_RESOURCE_POLICY = env("SECURE_CROSS_ORIGIN_RESOURCE_POLICY", "same-origin")
+
+LOG_LEVEL = env("LOG_LEVEL", "INFO").upper()
+SQL_LOG = env_bool("SQL_LOG", False)
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "%(levelname)s %(asctime)s %(name)s %(process)d %(thread)d %(message)s"},
+        "simple": {"format": "%(levelname)s %(name)s: %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose" if not DEBUG else "simple",
+            "level": LOG_LEVEL,
+        }
+    },
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
+        "django.request": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "django.server": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "DEBUG" if SQL_LOG else "INFO",
+            "propagate": False,
+        },
+    },
+}
+logging.captureWarnings(True)
+
+USE_CLOUDINARY = env_bool("USE_CLOUDINARY", False)
+if has_module("cloudinary_storage"):
+    cloudinary_cloud_name = env("CLOUDINARY_CLOUD_NAME")
+    cloudinary_api_key = env("CLOUDINARY_API_KEY")
+    cloudinary_api_secret = env("CLOUDINARY_API_SECRET")
+    cloudinary_enabled = USE_CLOUDINARY and all((cloudinary_cloud_name, cloudinary_api_key, cloudinary_api_secret))
+    if cloudinary_enabled:
+        CLOUDINARY_STORAGE = {
+            "CLOUD_NAME": cloudinary_cloud_name,
+            "API_KEY": cloudinary_api_key,
+            "API_SECRET": cloudinary_api_secret,
+        }
+        DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
